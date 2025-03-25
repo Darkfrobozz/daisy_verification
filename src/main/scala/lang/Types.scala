@@ -1,10 +1,12 @@
 // Original work Copyright 2009-2016 EPFL, Lausanne
 // Modified work Copyright 2017 MPI-SWS, Saarbruecken, Germany
-
-package daisy
 package lang
 
+
+// This should be replaced with lists.
 import scala.collection.immutable.Seq
+
+// This should be removed
 import tools.FinitePrecision.Precision
 
 import Trees._

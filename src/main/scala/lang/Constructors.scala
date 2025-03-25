@@ -1,7 +1,5 @@
 // Original work Copyright 2009-2016 EPFL, Lausanne
 // Modified work Copyright 2017 MPI-SWS, Saarbruecken, Germany
-
-package daisy
 package lang
 
 import Trees._

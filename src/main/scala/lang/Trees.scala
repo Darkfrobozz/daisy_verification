@@ -1,17 +1,18 @@
 // Original work Copyright 2009-2016 EPFL, Lausanne
 // Modified work Copyright 2017 MPI-SWS, Saarbruecken, Germany
-
-package daisy
 package lang
 
+// This should be replaced with list
 import scala.collection.immutable.Seq
+
 import TypeOps._
 import Types._
-import utils.{Positioned, PrettyPrinter}
 import Identifiers._
+
+// These should be removed
+import utils.{Positioned, PrettyPrinter}
 import tools.FinitePrecision._
 import tools.Rational
-
 object Trees {
 
   abstract class Tree extends Positioned with Serializable {
