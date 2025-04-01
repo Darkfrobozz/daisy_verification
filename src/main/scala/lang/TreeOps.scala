@@ -158,7 +158,6 @@ object TreeOps {
   def negate(expr: Expr): Expr = {
     // require(expr.getType == BooleanType)
     (expr match {
-      case Let(i,b,e) => Let(i,b,negate(e))
       case Not(e) => e
       case Implies(e1,e2) => and(e1, negate(e2))
       case Or(exs) => and(exs map negate: _*)
@@ -167,10 +166,9 @@ object TreeOps {
       case LessEquals(e1,e2) => GreaterThan(e1,e2)
       case GreaterThan(e1,e2) => LessEquals(e1,e2)
       case GreaterEquals(e1,e2) => LessThan(e1,e2)
-      case IfExpr(c,e1,e2) => IfExpr(c, negate(e1), negate(e2))
       case BooleanLiteral(b) => BooleanLiteral(!b)
       case e => Not(e)
-    }).setPos(expr)
+    })
   }
 
   /** Replaces bottom-up sub-expressions by looking up for them in a map */
@@ -178,73 +176,6 @@ object TreeOps {
     postMap(substs.lift, applyRec)(expr)
   }
 
-  /** Returns the set of free variables in an expression */
-  def freeVariablesOf(expr: Expr): Set[Identifier] = {
-    fold[Set[Identifier]] {
-      case (e, subs) =>
-        val subvs = subs.flatten.toSet
-        e match {
-          case Variable(i) => subvs + i
-          case Let(i, _, _) => subvs - i
-          case Lambda(args, _) => subvs -- args.map(_.id)
-          case _ => subvs
-        }
-    }(expr)
-  }
-
-  /** Returns the set of Delta variables in an expression */
-  def deltasOf(expr: Expr): Set[Delta] = {
-    fold[Set[Delta]] {
-      case (e, subs) =>
-        val subvs = subs.flatten.toSet
-        e match {
-          case x @ Delta(i) => subvs + x
-          case _ => subvs
-        }
-    }(expr)
-  }
-
-  /** Returns the set of Epsilon variables in an expression */
-  def epsilonsOf(expr: Expr): Set[Epsilon] = {
-    fold[Set[Epsilon]] {
-      case (e, subs) =>
-        val subvs = subs.flatten.toSet
-        e match {
-          case x @ Epsilon(i) => subvs + x
-          case _ => subvs
-        }
-    }(expr)
-  }
-
-  def getLastExpression(e: Expr): Expr = e match {
-    case Let(_, _, body) => getLastExpression(body)
-    case _ => e
-  }
-
-  /** Returns the set of all variables occuring (i.e. used) in an expression */
-  def allVariablesOf(expr: Expr): Set[Identifier] = {
-    fold[Set[Identifier]] {
-      case (e, subs) =>
-        val subvs = subs.flatten.toSet
-        e match {
-          case Variable(i) => subvs + i
-          case _ => subvs
-        }
-    }(expr)
-  }
-
-  // returns all IDs appearing in the program, both used and unused
-  def allIDsOf(expr: Expr): Set[Identifier] = {
-    fold[Set[Identifier]] {
-      case (e, subs) =>
-        val subvs = subs.flatten.toSet
-        e match {
-          case Variable(i) => subvs + i
-          case Let(i, _, _) => subvs + i
-          case _ => subvs
-        }
-    }(expr)
-  }
 
   /**
     A term is an expression which (for our purposes) does not contain
@@ -253,7 +184,6 @@ object TreeOps {
   def isBooleanTerm(e: Expr): Boolean = e match {
     case GreaterEquals(_, _) | GreaterThan(_,_) | LessThan(_, _) | LessEquals(_,_) => true
     case Equals(_, _) => true
-    case AbsError(_, _) => true
     case BooleanLiteral(_) => true
     case _ => false
   }
@@ -264,24 +194,5 @@ object TreeOps {
   def size(e: Expr): Int = e match {
     case Operator(es, _) =>
       es.map(size).sum + 1
-  }
-
-  def containsApproxNode(e: Expr): Boolean = e match {
-    case ApproxPoly(_,_,_,_) => true
-    case Variable(_) => false
-    case RealLiteral(_) => false
-    case FinitePrecisionLiteral(_, _, _) => false
-
-    case ArithOperator(es, _) => es.map(containsApproxNode).foldLeft(false)((acc, x) => acc || x)
-
-    case IfExpr(cond, thenn, elze) =>
-      // conditionals do not contain approx (todo can this happen in the future?)
-      containsApproxNode(thenn) || containsApproxNode(elze)
-
-    case Let(_, value, body) =>
-      containsApproxNode(value) || containsApproxNode(body)
-
-    case x @ Cast(castedExpr, _) =>
-      containsApproxNode(castedExpr)
   }
 }
