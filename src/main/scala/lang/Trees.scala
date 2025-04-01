@@ -6,7 +6,6 @@ package lang
 import scala.collection.immutable.Seq
 
 import Types._
-import Identifiers._
 
 // These should be removed
 object Trees {

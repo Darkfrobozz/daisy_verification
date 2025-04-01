@@ -4,11 +4,8 @@ package lang
 
 import scala.collection.immutable.Seq
 
-import Extractors._
 import Trees._
 import Constructors._
-
-import lang.Identifiers._
 
 /**
   Various useful functions for manipulating trees.
