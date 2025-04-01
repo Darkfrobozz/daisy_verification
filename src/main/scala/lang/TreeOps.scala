@@ -6,6 +6,7 @@ import scala.collection.immutable.Seq
 
 import Trees._
 import Constructors._
+import Extractors._
 
 /**
   Various useful functions for manipulating trees.
