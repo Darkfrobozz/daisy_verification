@@ -124,7 +124,7 @@ object TreeOps {
       }
       curr
     } else {
-      val rec = postMap(f, applyRec) _
+      val rec = postMap(f, applyRec)
 
       val Operator(es, builder) = e
       val newEs = es.map(rec)
