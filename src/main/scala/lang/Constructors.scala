@@ -86,12 +86,6 @@ object Constructors {
   def plus(lhs: Expr, rhs: Expr): Expr = (lhs, rhs) match {
     case (IntegerLiteral(bi), _) if bi == 0 => rhs
     case (_, IntegerLiteral(bi)) if bi == 0 => lhs
-    case (Int32Literal(0), _) => rhs
-    case (_, Int32Literal(0)) => lhs
-    case (RealLiteral(r), _) if r == tools.Rational.zero => rhs
-    case (_, RealLiteral(r)) if r == tools.Rational.zero => lhs
-    // case (IsTyped(_, Int32Type), IsTyped(_, Int32Type)) => BVPlus(lhs, rhs)
-    // case (IsTyped(_, RealType), IsTyped(_, RealType)) => RealPlus(lhs, rhs)
     case _ => Plus(lhs, rhs)
   }
 
@@ -102,7 +96,6 @@ object Constructors {
    */
   def minus(lhs: Expr, rhs: Expr): Expr = (lhs, rhs) match {
     case (_, IntegerLiteral(bi)) if bi == 0 => lhs
-    case (_, Int32Literal(0)) => lhs
     case (IntegerLiteral(bi), _) if bi == 0 => UMinus(rhs)
     // case (IntLiteral(0), _) => BVUMinus(rhs)
     // case (IsTyped(_, Int32Type), IsTyped(_, Int32Type)) => BVMinus(lhs, rhs)
@@ -120,10 +113,6 @@ object Constructors {
     case (_, IntegerLiteral(bi)) if bi == 1 => lhs
     case (IntegerLiteral(bi), _) if bi == 0 => IntegerLiteral(0)
     case (_, IntegerLiteral(bi)) if bi == 0 => IntegerLiteral(0)
-    case (Int32Literal(1), _) => rhs
-    case (_, Int32Literal(1)) => lhs
-    case (Int32Literal(0), _) => Int32Literal(0)
-    case (_, Int32Literal(0)) => Int32Literal(0)
     // case (IsTyped(_, Int32Type), IsTyped(_, Int32Type)) => BVTimes(lhs, rhs)
     // case (IsTyped(_, RealType), IsTyped(_, RealType)) => RealTimes(lhs, rhs)
     case _ => Times(lhs, rhs)
