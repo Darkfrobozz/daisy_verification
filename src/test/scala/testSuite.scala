@@ -3,6 +3,9 @@ import lang.Constructors.times
 import lang.Constructors
 import lang.TreeOps._
 import lang.TreeOps
+
+import stainless.collection.*
+import stainless.collection.List.*
 // For more information on writing tests, see
 // https://scalameta.org/munit/docs/getting-started.html
 class MySuite extends munit.FunSuite {
@@ -41,5 +44,38 @@ class MySuite extends munit.FunSuite {
     val k = Plus(a, Minus(b, c))
     val res1 = TreeOps.postMap(transform2, false)(k)
     assertEquals(res1, Plus(a, b))
+  }
+
+  test("Testing and optimization") {
+    val a = BooleanLiteral(true)
+    val b = BooleanLiteral(true)
+    val c = BooleanLiteral(true)
+    val d = BooleanLiteral(false)
+    val res1 = Constructors.and(List(a, b, c, d))
+    assertEquals(res1, BooleanLiteral(false))
+  }
+
+  test("Testing or optimization") {
+    val a = BooleanLiteral(false)
+    val b = BooleanLiteral(false)
+    val c = BooleanLiteral(true)
+    val d = BooleanLiteral(false)
+    val res1 = Constructors.or(List(a, b, c, d))
+    assertEquals(res1, BooleanLiteral(true))
+  }
+
+  def isEqual(obtained: List[Expr], expected: List[Expr]) : Boolean = {
+    (obtained, expected) match
+      case (Cons(x, xs), Cons(y, ys)) => x == y && isEqual(xs, ys) 
+      case (Nil, Nil) => true
+      case _ => false 
+  }
+  
+  test("Subexpressions from Plus") {
+    val a = IntegerLiteral(5)
+    val b = IntegerLiteral(4)
+    val res1 = TreeOps.getSubExpr(Plus(a, b))
+    print(res1.size)
+    assert(isEqual(res1, List(a,b)))
   }
 }
