@@ -5,22 +5,23 @@ package lang
 import Trees._
 import TreeOps._
 
-import scala.collection.immutable.Seq
+import stainless.collection.*
+import stainless.collection.List.*
 
 object Constructors {
 
   /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
    * @see [[lang.Trees.And And]]
    */
-  def and(exprs: Expr*): Expr = {
+  def and(exprs: List[Expr]): Expr = {
     // mutable
     val flat = exprs.flatMap {
       case And(es) => es
-      case o => Seq(o)
+      case o => List(o)
     }
 
     var stop = false
-    val simpler:Seq[Expr] = for(e <- flat if !stop && e != BooleanLiteral(true)) yield {
+    val simpler:List[Expr] = for(e <- flat if !stop && e != BooleanLiteral(true)) yield {
       if (e == BooleanLiteral(false)) {
         stop = true
       }
@@ -29,7 +30,7 @@ object Constructors {
 
     if (simpler.length == 0) BooleanLiteral(true)
     else if (simpler.length == 1) simpler.head
-    else And(Seq(simpler: _*))
+    else And(simpler)
 
   }
 
@@ -41,36 +42,39 @@ object Constructors {
   /** $encodingof `||`-expressions with arbitrary number of operands, and simplified.
    * @see [[purescala.Expressions.Or Or]]
    */
-  def or(exprs: Expr*): Expr = {
+  def or(exprs: List[Expr]): Expr = {
     val flat = exprs.flatMap {
       case Or(es) => es
-      case o => Seq(o)
+      case o => List(o)
     }
 
+    // Mutable
     var stop = false
-    val simpler:Seq[Expr] = for(e <- flat if !stop && e != BooleanLiteral(false)) yield {
+    val simpler:List[Expr] = for(e <- flat if !stop && e != BooleanLiteral(false)) yield {
       if (e == BooleanLiteral(true)) {
         stop = true
       }
       e
     }
 
+    // What are these other matches here?
+    // This looks like the make method
     simpler match {
-      case collection.mutable.Seq()  => BooleanLiteral(false)
-      case collection.mutable.Seq(x) => simpler(0)
-      case _      => Or(Seq(simpler: _*)) // make immutable Seq
+      case Nil()  => BooleanLiteral(false)
+      case Cons(x, Nil()) => x
+      case _      => Or(simpler) // make immutable Seq
     }
   }
 
   /** $encodingof `&&`-expressions with arbitrary number of operands as a sequence, and simplified.
    * @see [[purescala.Expressions.And And]]
    */
-  def andJoin(es: Seq[Expr]): Expr = and(es: _*)
+  def andJoin(es: List[Expr]): Expr = and(es)
 
   /** $encodingof `||`-expressions with arbitrary number of operands as a sequence, and simplified.
    * @see [[purescala.Expressions.Or Or]]
    */
-  def orJoin(es: Seq[Expr]): Expr = or(es: _*)
+  def orJoin(es: List[Expr]): Expr = or(es)
 
   /** $encodingof simplified `!`-expressions .
    * @see [[purescala.Expressions.Not Not]]

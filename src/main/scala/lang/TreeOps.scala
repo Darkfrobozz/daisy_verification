@@ -2,12 +2,12 @@
 // Modified work Copyright 2017 MPI-SWS, Saarbruecken, Germany
 package lang
 
-import scala.collection.immutable.Seq
-
 import Trees._
 import Constructors._
 import Extractors._
 
+import stainless.collection.*
+import stainless.collection.List.*
 /**
   Various useful functions for manipulating trees.
  */
@@ -24,15 +24,20 @@ object TreeOps {
    * @return The expression after applying `f` on all subtrees.
    * @note the computation is lazy, hence you should not rely on side-effects of `f`
    */
-  def fold[T](f: (Expr, Seq[T]) => T)(e: Expr): T = {
-    val rec = fold(f) _
+  def fold[T](f: (Expr, List[T]) => T)(e: Expr): T = {
+    val rec = fold(f)
     val Operator(es, _) = e
 
     // Usages of views makes the computation lazy. (which is useful for
     // contains-like operations)
-    f(e, Seq(es.view.map[T](rec).toSeq: _*))
+    // This is some sort of weird minimal code recursion...
+    // f(e, Seq(es.view.map[T](rec).toSeq: _*))
     // f(e, es.map(rec))
+    f(e, es.map[T](rec))
   }
+
+
+  // Both these traversals are mutable functions!
 
   /** Pre-traversal of the tree.
    *
@@ -51,12 +56,12 @@ object TreeOps {
    * @param f a function to apply on each node of the expression
    * @param e the expression to traverse
    */
-  def preTraversal(f: Expr => Unit)(e: Expr): Unit = {
-    val rec = preTraversal(f) _
-    val Operator(es, _) = e
-    f(e)
-    es.foreach(rec)
-  }
+  // def preTraversal(f: Expr => Unit)(e: Expr): Unit = {
+  //   val rec = preTraversal(f) _
+  //   val Operator(es, _) = e
+  //   f(e)
+  //   es.foreach(rec)
+  // }
 
 
   /** Post-traversal of the tree.
@@ -76,12 +81,12 @@ object TreeOps {
    * @param f a function to apply on each node of the expression
    * @param e the expression to traverse
    */
-  def postTraversal(f: Expr => Unit)(e: Expr): Unit = {
-    val rec = postTraversal(f) _
-    val Operator(es, _) = e
-    es.foreach(rec)
-    f(e)
-  }
+  // def postTraversal(f: Expr => Unit)(e: Expr): Unit = {
+  //   val rec = postTraversal(f) _
+  //   val Operator(es, _) = e
+  //   es.foreach(rec)
+  //   f(e)
+  // }
 
   /** Post-transformation of the tree.
    *
@@ -137,12 +142,12 @@ object TreeOps {
     }
 
   // Returns all sub-expression in an expression in a list
-  def getSubExpr(e: Expr): Seq[Expr] = {
+  def getSubExpr(e: Expr): List[Expr] = {
     val Operator(es, _) = e
     if(es.size >0){
       es.flatMap(getSubExpr(_)) :+ e
     } else {
-      Seq()
+      List()
     }
   }
 
@@ -157,9 +162,9 @@ object TreeOps {
     // require(expr.getType == BooleanType)
     (expr match {
       case Not(e) => e
-      case Implies(e1,e2) => and(e1, negate(e2))
-      case Or(exs) => and(exs map negate: _*)
-      case And(exs) => or(exs map negate: _*)
+      case Implies(e1,e2) => and(List(e1, negate(e2)))
+      case Or(exs) => and(exs.map(negate))
+      case And(exs) => or(exs.map(negate))
       case LessThan(e1,e2) => GreaterEquals(e1,e2)
       case LessEquals(e1,e2) => GreaterThan(e1,e2)
       case GreaterThan(e1,e2) => LessEquals(e1,e2)
@@ -186,11 +191,15 @@ object TreeOps {
     case _ => false
   }
 
+
+
   /**
     * Returns size of the tree, counting the operators and the terminal nodes
     */
-  def size(e: Expr): Int = e match {
+  def size(e: Expr): BigInt = e match {
+
+    // This takes List of subexpressions finds the size of each their subexpressions and then add them up
     case Operator(es, _) =>
-      es.map(size).sum + 1
+      es.map(size).foldLeft(BigInt(0))((ack, i) => ack + i) + 1
   }
 }

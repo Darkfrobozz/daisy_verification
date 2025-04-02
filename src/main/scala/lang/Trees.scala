@@ -3,7 +3,8 @@
 package lang
 
 // This should be replaced with list
-import scala.collection.immutable.Seq
+import stainless.collection.*
+import stainless.collection.List.*
 
 import Types._
 
@@ -76,10 +77,10 @@ object Trees {
    * you should use [[purescala.Constructors#and purescala's constructor and]]
    * or [[purescala.Constructors#andJoin purescala's constructor andJoin]]
    */
-  case class And(exprs: Seq[Expr]) extends Expr {
+  case class And(exprs: List[Expr]) extends Expr {
     require(exprs.size >= 2)
     val getType = {
-      if (exprs forall (_.getType == BooleanType)) {
+      if (exprs.forall(_.getType == BooleanType)) {
         BooleanType
       } else {
         Untyped
@@ -88,11 +89,11 @@ object Trees {
   }
 
   object And {
-    def apply(a: Expr, b: Expr): Expr = And(Seq(a, b))
+    def apply(a: Expr, b: Expr): Expr = And(List(a, b))
 
-    def make(exprs: Seq[Expr]): Expr = exprs match {
-      case Seq() => BooleanLiteral(true)
-      case Seq(e) => e
+    def make(exprs: List[Expr]): Expr = exprs match {
+      case Nil() => BooleanLiteral(true)
+      case Cons(e, Nil()) => e
       case _ => new And(exprs)
     }
   }
@@ -103,10 +104,10 @@ object Trees {
    * you should use [[purescala.Constructors#or purescala's constructor or]] or
    * [[purescala.Constructors#orJoin purescala's constructor orJoin]]
    */
-  case class Or(exprs: Seq[Expr]) extends Expr {
+  case class Or(exprs: List[Expr]) extends Expr {
     require(exprs.size >= 2)
     val getType = {
-      if (exprs forall (_.getType == BooleanType)) {
+      if (exprs.forall(_.getType == BooleanType)) {
         BooleanType
       } else {
         Untyped
@@ -115,7 +116,7 @@ object Trees {
   }
 
   object Or {
-    def apply(a: Expr, b: Expr): Expr = Or(Seq(a, b))
+    def apply(a: Expr, b: Expr): Expr = Or(List(a, b))
   }
 
   /** $encodingof `... ==> ...` (logical implication).
