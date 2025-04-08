@@ -37,7 +37,6 @@ object Constructors {
   /** $encodingof `&&`-expressions with arbitrary number of operands as a sequence, and simplified.
    * @see [[purescala.Expressions.And And]]
    */
-  // def andJoin(es: Seq[Expr]) = and(es :_*)
 
   /** $encodingof `||`-expressions with arbitrary number of operands, and simplified.
    * @see [[purescala.Expressions.Or Or]]
@@ -62,7 +61,7 @@ object Constructors {
     simpler match {
       case Nil()  => BooleanLiteral(false)
       case Cons(x, Nil()) => x
-      case _      => Or(simpler) // make immutable Seq
+      case _      => Or(simpler)
     }
   }
 

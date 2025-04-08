@@ -22,10 +22,6 @@ object Types {
     // and if so sets this to Untyped.
     // Assumes the subtypes are correctly formed, so it does not descend
     // deep into the TypeTree.
-    // def unveilUntyped: TypeTree = this match {
-    //   case NAryType(tps, _) =>
-    //     if (tps contains Untyped) Untyped else this
-    // }
     def deepCopy: TypeTree = this
   }
 
@@ -33,9 +29,4 @@ object Types {
   case object BooleanType extends TypeTree
   case object UnitType extends TypeTree
   case object IntegerType extends TypeTree
-  // object NAryType {
-  //   def unapply(t: TypeTree): Option[(Seq[TypeTree], Seq[TypeTree] => TypeTree)] = t match {
-  //     case t => Some(Nil, _ => t)
-  //   }
-  // }
 }
