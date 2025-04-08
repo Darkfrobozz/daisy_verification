@@ -9,7 +9,6 @@ import stainless.collection.*
 import stainless.collection.List.*
 
 object Constructors {
-
   /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
    * @see [[lang.Trees.And And]]
    */
@@ -20,13 +19,24 @@ object Constructors {
       case o => List(o)
     }
 
-    var stop = false
-    val simpler:List[Expr] = for(e <- flat if !stop && e != BooleanLiteral(true)) yield {
-      if (e == BooleanLiteral(false)) {
-        stop = true
-      }
-      e
-    }
+    // This code collects all except true literals or takes first false.
+
+    // Immutable version
+    val preSimpler:List[Expr] = flat.takeWhile(p => p != BooleanLiteral(false))
+
+    val simpler = if (preSimpler.length == flat.length) {
+      preSimpler
+    } else {
+      preSimpler ++ List(BooleanLiteral(false))
+    }.filter(p => p != BooleanLiteral(true))
+
+    // var stop = false
+    // val simpler:List[Expr] = for(e <- flat if !stop && e != BooleanLiteral(true)) yield {
+    //   if (e == BooleanLiteral(false)) {
+    //     stop = true
+    //   }
+    //   e
+    // }
 
     if (simpler.length == 0) BooleanLiteral(true)
     else if (simpler.length == 1) simpler.head
@@ -47,14 +57,23 @@ object Constructors {
       case o => List(o)
     }
 
+    // Immutable Version
+    val preSimpler:List[Expr] = flat.takeWhile(p => p != BooleanLiteral(true))
+
+    val simpler = if (preSimpler.length == flat.length) {
+      preSimpler
+    } else {
+      preSimpler ++ List(BooleanLiteral(true))
+    }.filter(p => p != BooleanLiteral(false))
+
     // Mutable
-    var stop = false
-    val simpler:List[Expr] = for(e <- flat if !stop && e != BooleanLiteral(false)) yield {
-      if (e == BooleanLiteral(true)) {
-        stop = true
-      }
-      e
-    }
+    // var stop = false
+    // val simpler:List[Expr] = for(e <- flat if !stop && e != BooleanLiteral(false)) yield {
+    //   if (e == BooleanLiteral(true)) {
+    //     stop = true
+    //   }
+    //   e
+    // }
 
     // What are these other matches here?
     // This looks like the make method

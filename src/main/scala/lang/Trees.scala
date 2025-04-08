@@ -6,15 +6,19 @@ package lang
 import stainless.collection.*
 import stainless.collection.List.*
 
-import Types._
-
 // These should be removed
 object Trees {
+  sealed trait TypeTree
 
-  abstract class Tree
+  case object Untyped extends TypeTree
+  case object BooleanType extends TypeTree
+  case object UnitType extends TypeTree
+  case object IntegerType extends TypeTree
+
+  sealed trait Tree
 
   /** Represents an expression in Leon. */
-  sealed abstract class Expr extends Tree with Typed {
+  sealed trait Expr extends Tree with Typed {
     def Plus(that: Expr): Expr = Trees.Plus(this, that)
     def Minus(that: Expr): Expr = Trees.Minus(this, that)
     def Times(that: Expr): Expr = Trees.Times(this, that)
