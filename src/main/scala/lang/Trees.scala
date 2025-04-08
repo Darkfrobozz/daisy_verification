@@ -15,10 +15,12 @@ object Trees {
   case object UnitType extends TypeTree
   case object IntegerType extends TypeTree
 
-  sealed trait Tree
+  sealed trait Tree {
+    def getType : TypeTree
+  }
 
   /** Represents an expression in Leon. */
-  sealed trait Expr extends Tree with Typed {
+  sealed trait Expr extends Tree {
     def Plus(that: Expr): Expr = Trees.Plus(this, that)
     def Minus(that: Expr): Expr = Trees.Minus(this, that)
     def Times(that: Expr): Expr = Trees.Times(this, that)
@@ -38,27 +40,27 @@ object Trees {
    * respective type for value types.
    */
   case class NoTree(tpe: TypeTree) extends Expr with Terminal {
-    val getType = tpe
+    def getType = tpe
   }
 
   /** Literals */
   sealed abstract class Literal[+T] extends Expr with Terminal {
-    val value: T
+    def value: T
   }
 
   /** $encodingof an infinite precision integer literal */
   case class IntegerLiteral(value: BigInt) extends Literal[BigInt] {
-    val getType = IntegerType
+    def getType = IntegerType
   }
 
   /** $encodingof a boolean literal '''true''' or '''false''' */
   case class BooleanLiteral(value: Boolean) extends Literal[Boolean] {
-    val getType = BooleanType
+    def getType = BooleanType
   }
 
   /** $encodingof the unit literal `()` */
   case class UnitLiteral() extends Literal[Unit] {
-    val getType = UnitType
+    def getType = UnitType
     val value = ()
   }
 
@@ -66,7 +68,7 @@ object Trees {
 
   /** $encodingof `... == ...` */
   case class Equals(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = {
+    def getType = {
       if (lhs.getType == rhs.getType) {
         BooleanType
       } else {
@@ -83,7 +85,7 @@ object Trees {
    */
   case class And(exprs: List[Expr]) extends Expr {
     require(exprs.size >= 2)
-    val getType = {
+    def getType = {
       if (exprs.forall(_.getType == BooleanType)) {
         BooleanType
       } else {
@@ -110,7 +112,7 @@ object Trees {
    */
   case class Or(exprs: List[Expr]) extends Expr {
     require(exprs.size >= 2)
-    val getType = {
+    def getType = {
       if (exprs.forall(_.getType == BooleanType)) {
         BooleanType
       } else {
@@ -131,7 +133,7 @@ object Trees {
    * @see [[leon.purescala.Constructors.implies]]
    */
   case class Implies(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = {
+    def getType = {
       if (lhs.getType == BooleanType && rhs.getType == BooleanType) {
         BooleanType
       } else {
@@ -145,7 +147,7 @@ object Trees {
    * @see [[leon.purescala.Constructors.not]]
    */
   case class Not(expr: Expr) extends Expr {
-    val getType = {
+    def getType = {
       if (expr.getType == BooleanType) {
         BooleanType
       } else {
@@ -158,38 +160,38 @@ object Trees {
 
   /** $encodingof `... +  ...` */
   case class Plus(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = lhs.getType
+    def getType = lhs.getType
   }
 
   /** $encodingof `... -  ...` */
   case class Minus(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = lhs.getType
+    def getType = lhs.getType
   }
 
   /** $encodingof `- ... for BigInts` */
   case class UMinus(expr: Expr) extends Expr {
-    val getType = expr.getType
+    def getType = expr.getType
   }
 
   /** $encodingof `... * ...` */
   case class Times(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = lhs.getType
+    def getType = lhs.getType
   }
 
   /** $encodingof `(... * ...) + ...` */
   case class FMA(fac1: Expr, fac2: Expr, s: Expr) extends Expr {
-    val getType = fac1.getType
+    def getType = fac1.getType
   }
 
   /** $encodingof `... / ...` */
   case class Division(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = lhs.getType
+    def getType = lhs.getType
   }
 
 
   case class IntPow(base: Expr, exp: Int) extends Expr {
     assert(exp > 0)
-    override val getType: TypeTree = base.getType
+    override def getType: TypeTree = base.getType
   }
 
 
@@ -197,18 +199,18 @@ object Trees {
 
   /** $encodingof `... < ...` */
   case class LessThan(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = BooleanType
+    def getType = BooleanType
   }
   /** $encodingof `... > ...` */
   case class GreaterThan(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = BooleanType
+    def getType = BooleanType
   }
   /** $encodingof `... <= ...` */
   case class LessEquals(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = BooleanType
+    def getType = BooleanType
   }
   /** $encodingof `... >= ...` */
   case class GreaterEquals(lhs: Expr, rhs: Expr) extends Expr {
-    val getType = BooleanType
+    def getType = BooleanType
   }
 }
