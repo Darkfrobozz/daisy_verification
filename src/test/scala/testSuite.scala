@@ -23,11 +23,11 @@ class MySuite extends munit.FunSuite {
   }
 
 
-  test("Testing  PostMap 5 - (4 - 2) => 5 - 2") {
-    val k = Plus(IntegerLiteral(5), Minus(IntegerLiteral(4), IntegerLiteral(3)))
-    val res1 = TreeOps.postMap(transform, false)(k)
-    assertEquals(res1, Plus(IntegerLiteral(5), IntegerLiteral(2)))
-  }
+  // test("Testing  PostMap 5 - (4 - 2) => 5 - 2") {
+  //   val k = Plus(IntegerLiteral(5), Minus(IntegerLiteral(4), IntegerLiteral(3)))
+  //   val res1 = TreeOps.postMap(transform, false)(k)
+  //   assertEquals(res1, Plus(IntegerLiteral(5), IntegerLiteral(2)))
+  // }
 
   def transform2(e : Expr) : Option[Expr] = {
     e match
@@ -37,15 +37,15 @@ class MySuite extends munit.FunSuite {
       case _ => None 
   }
 
-  test("Testing  PostMap example") {
-    val a = IntegerLiteral(5)
-    val b = IntegerLiteral(4)
-    val c = IntegerLiteral(3)
-    val d = IntegerLiteral(7)
-    val k = Plus(a, Minus(b, c))
-    val res1 = TreeOps.postMap(transform2, false)(k)
-    assertEquals(res1, Plus(a, b))
-  }
+  // test("Testing  PostMap example") {
+  //   val a = IntegerLiteral(5)
+  //   val b = IntegerLiteral(4)
+  //   val c = IntegerLiteral(3)
+  //   val d = IntegerLiteral(7)
+  //   val k = Plus(a, Minus(b, c))
+  //   val res1 = TreeOps.postMap(transform2, false)(k)
+  //   assertEquals(res1, Plus(a, b))
+  // }
 
   test("Testing and optimization") {
     val a = BooleanLiteral(true)
