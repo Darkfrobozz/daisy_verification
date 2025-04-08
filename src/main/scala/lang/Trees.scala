@@ -26,7 +26,7 @@ object Trees {
     def Times(that: Expr): Expr = Trees.Times(this, that)
     def Division(that: Expr): Expr = Trees.Division(this, that)
 //    def Pow(that: Expr): Expr = Trees.Pow(this, that)
-    def IntPow(n: Int): Expr = Trees.IntPow(this, n)
+    def IntPow(n: BigInt): Expr = Trees.IntPow(this, n)
   }
 
   /** Stands for an undefined Expr, similar to `???` or `null`
@@ -56,7 +56,7 @@ object Trees {
   /** $encodingof the unit literal `()` */
   case class UnitLiteral() extends Literal[Unit] {
     def getType = UnitType
-    val value = ()
+    def value = ()
   }
 
   /* Propositional logic */
@@ -184,8 +184,8 @@ object Trees {
   }
 
 
-  case class IntPow(base: Expr, exp: Int) extends Expr {
-    assert(exp > 0)
+  case class IntPow(base: Expr, exp: BigInt) extends Expr {
+    require(exp > 0)
     override def getType: TypeTree = base.getType
   }
 

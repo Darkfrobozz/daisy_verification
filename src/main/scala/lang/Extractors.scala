@@ -79,7 +79,7 @@ object Extractors {
       case Or(args) => Some((args, or))
 
       /* Terminals */
-      case t: Terminal => Some(List[Expr](), (_: List[Expr]) => t)
+      // case t: Terminal => Some(List[Expr](), (_: List[Expr]) => t)
     }
   }
 }
