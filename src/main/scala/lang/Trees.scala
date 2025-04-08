@@ -29,22 +29,17 @@ object Trees {
     def IntPow(n: Int): Expr = Trees.IntPow(this, n)
   }
 
-  /** Trait which gets mixed-in to expressions without subexpressions */
-  trait Terminal {
-    self: Expr =>
-  }
-
   /** Stands for an undefined Expr, similar to `???` or `null`
    *
    * During code generation, it gets compiled to `null`, or the 0 of the
    * respective type for value types.
    */
-  case class NoTree(tpe: TypeTree) extends Expr with Terminal {
+  case class NoTree(tpe: TypeTree) extends Expr {
     def getType = tpe
   }
 
   /** Literals */
-  sealed abstract class Literal[+T] extends Expr with Terminal {
+  sealed trait Literal[+T] extends Expr {
     def value: T
   }
 
