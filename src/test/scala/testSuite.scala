@@ -3,6 +3,7 @@ import lang.Constructors.times
 import lang.Constructors
 import lang.TreeOps._
 import lang.TreeOps
+import lang.Eval.eval
 
 import stainless.collection.*
 import stainless.collection.List.*
@@ -68,7 +69,13 @@ class MySuite extends munit.FunSuite {
     val a = IntegerLiteral(5)
     val b = IntegerLiteral(4)
     val res1 = TreeOps.getSubExpr(Plus(a, b))
-    print(res1.size)
     assertEquals(res1, List[Expr](Plus(a,b)))
+  }
+
+
+  test("Using eval") {
+    val a = IntegerLiteral(5)
+    val b = IntegerLiteral(4)
+    assertEquals(eval(Plus(a, b)), BigInt(9))
   }
 }
