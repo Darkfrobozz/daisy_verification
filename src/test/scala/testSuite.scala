@@ -64,18 +64,11 @@ class MySuite extends munit.FunSuite {
     assertEquals(res1, BooleanLiteral(true))
   }
 
-  def isEqual(obtained: List[Expr], expected: List[Expr]) : Boolean = {
-    (obtained, expected) match
-      case (Cons(x, xs), Cons(y, ys)) => x == y && isEqual(xs, ys) 
-      case (Nil, Nil) => true
-      case _ => false 
-  }
-  
   test("Subexpressions from Plus") {
     val a = IntegerLiteral(5)
     val b = IntegerLiteral(4)
     val res1 = TreeOps.getSubExpr(Plus(a, b))
     print(res1.size)
-    assert(isEqual(res1, List(a,b)))
+    assertEquals(res1, List[Expr](Plus(a,b)))
   }
 }
