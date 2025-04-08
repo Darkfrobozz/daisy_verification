@@ -39,24 +39,22 @@ object Trees {
   }
 
   /** Literals */
-  sealed trait Literal[+T] extends Expr {
-    def value: T
+  sealed trait Literal extends Expr {
   }
 
   /** $encodingof an infinite precision integer literal */
-  case class IntegerLiteral(value: BigInt) extends Literal[BigInt] {
+  case class IntegerLiteral(value: BigInt) extends Literal {
     def getType = IntegerType
   }
 
   /** $encodingof a boolean literal '''true''' or '''false''' */
-  case class BooleanLiteral(value: Boolean) extends Literal[Boolean] {
+  case class BooleanLiteral(value: Boolean) extends Literal{
     def getType = BooleanType
   }
 
   /** $encodingof the unit literal `()` */
-  case class UnitLiteral() extends Literal[Unit] {
+  case class UnitLiteral() extends Literal {
     def getType = UnitType
-    def value = ()
   }
 
   /* Propositional logic */
@@ -185,7 +183,6 @@ object Trees {
 
 
   case class IntPow(base: Expr, exp: BigInt) extends Expr {
-    require(exp > 0)
     override def getType: TypeTree = base.getType
   }
 
