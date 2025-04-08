@@ -55,6 +55,18 @@ class MySuite extends munit.FunSuite {
     val res1 = Constructors.and(List(a, b, c, d))
     assertEquals(res1, BooleanLiteral(false))
   }
+
+
+  test("Testing and optimization") {
+    val a = BooleanLiteral(true)
+    val b = BooleanLiteral(true)
+    val c = BooleanLiteral(true)
+    val d = Or(List(a, b, c, BooleanLiteral(false)))
+    val e = BooleanLiteral(false)
+    val res1 = Constructors.and(List(a, b, c, d, e))
+    assertEquals(res1, BooleanLiteral(false))
+  }
+
   test("Testing and optimization") {
     val a = BooleanLiteral(true)
     val b = BooleanLiteral(true)
