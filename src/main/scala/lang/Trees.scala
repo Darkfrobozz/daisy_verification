@@ -5,6 +5,8 @@ package lang
 // This should be replaced with list
 import stainless.collection.*
 import stainless.collection.List.*
+import stainless.annotation._
+import ListsTheorems._
 
 // These should be removed
 object Trees {
@@ -28,7 +30,7 @@ object Trees {
     def IntPow(n: BigInt): Expr = Trees.IntPow(this, n)
   }
 
-  /** Stands for an undefined Expr, similar to `???` or `null`
+  /* Stands for an undefined Expr, similar to `???` or `null`
    *
    * During code generation, it gets compiled to `null`, or the 0 of the
    * respective type for value types.
@@ -86,20 +88,26 @@ object Trees {
     }
   }
 
+
   object And {
     def apply(a: Expr, b: Expr): Expr = {
+      list_size(a, b)
       val k = List(a, b)
       // It can't prove the size of the list...
       assert(k.head == a)
       assert(k.tail.head == b)
       assert(k.size == 2)
-      And(List(a, b))
+      And(k)
     }
 
     def make(exprs: List[Expr]): Expr = exprs match {
       case Nil() => BooleanLiteral(true)
       case Cons(e, Nil()) => e
-      case _ => new And(exprs)
+      case Cons(_, Cons(_, _)) => {
+        listOfForm(exprs)
+        assert(exprs.size >= 2)
+        new And(exprs)
+      }
     }
   }
 
