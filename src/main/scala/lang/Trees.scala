@@ -17,17 +17,24 @@ object Trees {
   case object UnitType extends TypeTree
   case object IntegerType extends TypeTree
 
-  sealed trait Tree {
+  // sealed trait Tree {
+  //   def getType : TypeTree
+  // }
+
+  /** Represents an expression in Leon. */
+  sealed trait Expr {
     def getType : TypeTree
   }
 
-  /** Represents an expression in Leon. */
-  sealed trait Expr extends Tree {
-    def Plus(that: Expr): Expr = Trees.Plus(this, that)
-    def Minus(that: Expr): Expr = Trees.Minus(this, that)
-    def Times(that: Expr): Expr = Trees.Times(this, that)
-    def Division(that: Expr): Expr = Trees.Division(this, that)
-    def IntPow(n: BigInt): Expr = Trees.IntPow(this, n)
+  object Expr {
+    def Plus(t: Expr, that: Expr): Expr = Trees.Plus(t, that)
+    def Minus(t: Expr, that: Expr): Expr = Trees.Minus(t, that)
+    def Times(t: Expr, that: Expr): Expr = Trees.Times(t, that)
+    def Division(t: Expr, that: Expr): Expr = Trees.Division(t, that)
+    def IntPow(t: Expr, n: BigInt): Expr = {
+      require(n > 0)
+      Trees.IntPow(t, n)
+    }
   }
 
   /* Stands for an undefined Expr, similar to `???` or `null`
@@ -100,6 +107,11 @@ object Trees {
       And(k)
     }
 
+    def apply(exprs: List[Expr]) = {
+      require(exprs.size >= 2)
+      new And(exprs)
+    }
+
     def make(exprs: List[Expr]): Expr = exprs match {
       case Nil() => BooleanLiteral(true)
       case Cons(e, Nil()) => e
@@ -118,7 +130,6 @@ object Trees {
    * [[purescala.Constructors#orJoin purescala's constructor orJoin]]
    */
   case class Or(exprs: List[Expr]) extends Expr {
-    require(exprs.size >= 2)
     def getType = {
       if (exprs.forall(_.getType == BooleanType)) {
         BooleanType
@@ -129,7 +140,14 @@ object Trees {
   }
 
   object Or {
-    def apply(a: Expr, b: Expr): Expr = Or(List(a, b))
+    def apply(a: Expr, b: Expr): Expr = {
+      list_size(a, b)
+      Or(List(a, b))
+    }
+    def apply(exprs: List[Expr]) = {
+      require(exprs.size >= 2)
+      new Or(exprs)
+    }
   }
 
   /** $encodingof `... ==> ...` (logical implication).
@@ -197,8 +215,15 @@ object Trees {
 
 
   case class IntPow(base: Expr, exp: BigInt) extends Expr {
-    require(exp > 0)
     override def getType: TypeTree = base.getType
+  }
+
+  object IntPow {
+    def apply(base: Expr, exp: BigInt) = {
+      require(exp > 0)
+      new IntPow(base, exp)
+    }
+
   }
 
 
