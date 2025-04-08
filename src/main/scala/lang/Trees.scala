@@ -25,7 +25,6 @@ object Trees {
     def Minus(that: Expr): Expr = Trees.Minus(this, that)
     def Times(that: Expr): Expr = Trees.Times(this, that)
     def Division(that: Expr): Expr = Trees.Division(this, that)
-//    def Pow(that: Expr): Expr = Trees.Pow(this, that)
     def IntPow(n: BigInt): Expr = Trees.IntPow(this, n)
   }
 
@@ -88,7 +87,14 @@ object Trees {
   }
 
   object And {
-    def apply(a: Expr, b: Expr): Expr = And(List(a, b))
+    def apply(a: Expr, b: Expr): Expr = {
+      val k = List(a, b)
+      // It can't prove the size of the list...
+      assert(k.head == a)
+      assert(k.tail.head == b)
+      assert(k.size == 2)
+      And(List(a, b))
+    }
 
     def make(exprs: List[Expr]): Expr = exprs match {
       case Nil() => BooleanLiteral(true)
@@ -183,6 +189,7 @@ object Trees {
 
 
   case class IntPow(base: Expr, exp: BigInt) extends Expr {
+    require(exp > 0)
     override def getType: TypeTree = base.getType
   }
 
