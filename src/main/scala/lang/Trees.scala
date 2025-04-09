@@ -24,7 +24,28 @@ object Trees {
 
   /** Represents an expression in Leon. */
   sealed trait Expr {
-    def getType : TypeTree
+    def getType : TypeTree = {
+      this match
+        case IntegerLiteral(value) => IntegerType
+        case BooleanLiteral(value) => IntegerType
+        case UnitLiteral() => UnitType
+        case Equals(lhs, rhs) => if (lhs.getType == rhs.getType) BooleanType else Untyped 
+        case And(exprs) => if (exprs.forall(p => p.getType == BooleanType)) BooleanType else Untyped
+        case Or(exprs) => if (exprs.forall(p => p.getType == BooleanType)) BooleanType else Untyped
+        case Implies(lhs, rhs) => if (lhs.getType == BooleanType && rhs.getType == BooleanType) BooleanType else Untyped
+        case Not(expr) => if (expr.getType == BooleanType) BooleanType else Untyped
+        case Plus(lhs, rhs) => lhs.getType
+        case Minus(lhs, rhs) => lhs.getType
+        case UMinus(expr) => expr.getType
+        case Times(lhs, rhs) => lhs.getType
+        case FMA(fac1, fac2, s) => fac1.getType
+        case Division(lhs, rhs) => lhs.getType
+        case IntPow(base, exp) => base.getType
+        case LessThan(lhs, rhs) => BooleanType
+        case GreaterThan(lhs, rhs) => BooleanType
+        case LessEquals(lhs, rhs) => BooleanType
+        case GreaterEquals(lhs, rhs) => BooleanType 
+    }
   }
 
   object Expr {
@@ -46,30 +67,20 @@ object Trees {
 
   /** $encodingof an infinite precision integer literal */
   case class IntegerLiteral(value: BigInt) extends Expr {
-    def getType = IntegerType
   }
 
   /** $encodingof a boolean literal '''true''' or '''false''' */
   case class BooleanLiteral(value: Boolean) extends Expr {
-    def getType = BooleanType
   }
 
   /** $encodingof the unit literal `()` */
   case class UnitLiteral() extends Expr {
-    def getType = UnitType
   }
 
   /* Propositional logic */
 
   /** $encodingof `... == ...` */
   case class Equals(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = {
-      if (lhs.getType == rhs.getType) {
-        BooleanType
-      } else {
-        Untyped
-      }
-    }
   }
 
   /** $encodingof `... && ...`
@@ -80,13 +91,6 @@ object Trees {
    */
   case class And(exprs: List[Expr]) extends Expr {
     require(exprs.size >= 2)
-    def getType = {
-      if (exprs.forall(_.getType == BooleanType)) {
-        BooleanType
-      } else {
-        Untyped
-      }
-    }
   }
 
 
@@ -131,13 +135,6 @@ object Trees {
    */
   case class Or(exprs: List[Expr]) extends Expr {
     require(exprs.size >= 2)
-    def getType = {
-      if (exprs.forall(_.getType == BooleanType)) {
-        BooleanType
-      } else {
-        Untyped
-      }
-    }
   }
 
   object Or {
@@ -165,13 +162,6 @@ object Trees {
    * @see [[leon.purescala.Constructors.implies]]
    */
   case class Implies(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = {
-      if (lhs.getType == BooleanType && rhs.getType == BooleanType) {
-        BooleanType
-      } else {
-        Untyped
-      }
-    }
   }
 
   /** $encodingof `!...`
@@ -179,50 +169,36 @@ object Trees {
    * @see [[leon.purescala.Constructors.not]]
    */
   case class Not(expr: Expr) extends Expr {
-    def getType = {
-      if (expr.getType == BooleanType) {
-        BooleanType
-      } else {
-        Untyped
-      }
-    }
   }
 
   /* Arithmetic */
 
   /** $encodingof `... +  ...` */
   case class Plus(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = lhs.getType
   }
 
   /** $encodingof `... -  ...` */
   case class Minus(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = lhs.getType
   }
 
   /** $encodingof `- ... for BigInts` */
   case class UMinus(expr: Expr) extends Expr {
-    def getType = expr.getType
   }
 
   /** $encodingof `... * ...` */
   case class Times(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = lhs.getType
   }
 
   /** $encodingof `(... * ...) + ...` */
   case class FMA(fac1: Expr, fac2: Expr, s: Expr) extends Expr {
-    def getType = fac1.getType
   }
 
   /** $encodingof `... / ...` */
   case class Division(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = lhs.getType
   }
 
 
   case class IntPow(base: Expr, exp: BigInt) extends Expr {
-    override def getType: TypeTree = base.getType
   }
 
   object IntPow {
@@ -244,18 +220,14 @@ object Trees {
 
   /** $encodingof `... < ...` */
   case class LessThan(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = BooleanType
   }
   /** $encodingof `... > ...` */
   case class GreaterThan(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = BooleanType
   }
   /** $encodingof `... <= ...` */
   case class LessEquals(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = BooleanType
   }
   /** $encodingof `... >= ...` */
   case class GreaterEquals(lhs: Expr, rhs: Expr) extends Expr {
-    def getType = BooleanType
   }
 }
