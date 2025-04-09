@@ -7,6 +7,7 @@ import stainless.collection.*
 import stainless.collection.List.*
 import stainless.annotation._
 import ListsTheorems._
+import stainless.lang._
 
 // These should be removed
 object Trees {
@@ -121,6 +122,13 @@ object Trees {
         new And(exprs)
       }
     }
+
+    def unapply(t: And): Option[List[Expr]] = {
+      Some(t.exprs) 
+    }.ensuring(res => {
+      res match
+        case Some(v) => v.size >= 2 
+    })
   }
 
   /** $encodingof `... || ...`
@@ -130,6 +138,7 @@ object Trees {
    * [[purescala.Constructors#orJoin purescala's constructor orJoin]]
    */
   case class Or(exprs: List[Expr]) extends Expr {
+    require(exprs.size >= 2)
     def getType = {
       if (exprs.forall(_.getType == BooleanType)) {
         BooleanType
@@ -148,6 +157,14 @@ object Trees {
       require(exprs.size >= 2)
       new Or(exprs)
     }
+
+    def unapply(t: Or): Option[List[Expr]] = {
+      assert(t.exprs.size >= 2)
+      Some(t.exprs) 
+    }.ensuring(res => {
+      res match
+        case Some(v) => v.size >= 2 
+    })
   }
 
   /** $encodingof `... ==> ...` (logical implication).
@@ -222,6 +239,10 @@ object Trees {
     def apply(base: Expr, exp: BigInt) = {
       require(exp > 0)
       new IntPow(base, exp)
+    }
+
+    def unapply(t: IntPow): Option[(Expr, BigInt)] = {
+      Some((t.base, t.exp)) 
     }
 
   }

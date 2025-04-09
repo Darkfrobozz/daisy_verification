@@ -7,7 +7,6 @@ import stainless.collection.*
 import stainless.collection.List.*
 
 import Trees._
-import Constructors._
 
 object Extractors {
 
@@ -75,8 +74,8 @@ object Extractors {
       case GreaterEquals(t1, t2) =>
         Some(List(t1, t2), (es: List[Expr]) => GreaterEquals(es(0), es(1)))
 
-      case And(args) => Some((args, and))
-      case Or(args) => Some((args, or))
+      case And(args) => Some((args, And.apply))
+      case Or(args) => Some((args, Or.apply))
 
       /* Terminals */
       // case t: Terminal => Some(List[Expr](), (_: List[Expr]) => t)
