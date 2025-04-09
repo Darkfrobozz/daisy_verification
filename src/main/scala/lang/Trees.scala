@@ -59,9 +59,10 @@ object Trees {
         case LessEquals(lhs, rhs) => 0
         case GreaterEquals(lhs, rhs) => 0)
       
-    }
+    }.ensuring(res => res > 0)
 
-    def getType(@induct expr: Expr) : TypeTree = {
+    def getType(expr: Expr) : TypeTree = {
+      decreases(1, complexity(expr))
       expr match
         case IntegerLiteral(value) => IntegerType
         case BooleanLiteral(value) => BooleanType
@@ -87,7 +88,7 @@ object Trees {
 
     def getListType(lExpr: List[Expr]) : TypeTree = {
       // When this calls getType, getType can call it...
-      decreases(lExpr.size)
+      decreases(0, lExpr.size)
       lExpr match
         // This should assume that getType terminates
         case Cons(h, t) => if (getType(h) == getListType(t) && getType(h) == BooleanType) BooleanType else Untyped 
