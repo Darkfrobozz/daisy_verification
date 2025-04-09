@@ -36,6 +36,31 @@ object Trees {
       Trees.IntPow(t, n)
     }
 
+    @library
+    def complexity(@induct expr: Expr) : BigInt = {
+      BigInt(1) + (expr match
+        case IntegerLiteral(value) => 0
+        case BooleanLiteral(value) => 0
+        case UnitLiteral() => 0
+        case And(exprs) => 0
+        case Or(exprs) => 0
+        case Equals(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case Implies(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case Not(expr) => complexity(expr)
+        case lang.Trees.Plus(lhs, rhs) => complexity(lhs)
+        case lang.Trees.Minus(lhs, rhs) => complexity(lhs)
+        case UMinus(expr) => complexity(expr)
+        case lang.Trees.Times(lhs, rhs) => complexity(lhs)
+        case FMA(fac1, fac2, s) => complexity(fac1)
+        case lang.Trees.Division(lhs, rhs) => complexity(lhs)
+        case lang.Trees.IntPow(base, exp) => complexity(base)
+        case LessThan(lhs, rhs) => 0
+        case GreaterThan(lhs, rhs) => 0
+        case LessEquals(lhs, rhs) => 0
+        case GreaterEquals(lhs, rhs) => 0)
+      
+    }
+
     def getType(@induct expr: Expr) : TypeTree = {
       expr match
         case IntegerLiteral(value) => IntegerType
@@ -61,6 +86,7 @@ object Trees {
     }
 
     def getListType(lExpr: List[Expr]) : TypeTree = {
+      // When this calls getType, getType can call it...
       decreases(lExpr.size)
       lExpr match
         // This should assume that getType terminates
