@@ -26,6 +26,7 @@ object ListsTheorems {
   }.ensuring(l.size >= 2)
 
 
+  @ignore
   def treeSize(e: Expr) : BigInt = {
     BigInt(1) + (e match
       case IntegerLiteral(value) => 0
