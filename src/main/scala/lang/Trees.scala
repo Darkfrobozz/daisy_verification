@@ -43,26 +43,19 @@ object Trees {
    * During code generation, it gets compiled to `null`, or the 0 of the
    * respective type for value types.
    */
-  case class NoTree(tpe: TypeTree) extends Expr {
-    def getType = tpe
-  }
-
-  /** Literals */
-  sealed trait Literal extends Expr {
-  }
 
   /** $encodingof an infinite precision integer literal */
-  case class IntegerLiteral(value: BigInt) extends Literal {
+  case class IntegerLiteral(value: BigInt) extends Expr {
     def getType = IntegerType
   }
 
   /** $encodingof a boolean literal '''true''' or '''false''' */
-  case class BooleanLiteral(value: Boolean) extends Literal{
+  case class BooleanLiteral(value: Boolean) extends Expr {
     def getType = BooleanType
   }
 
   /** $encodingof the unit literal `()` */
-  case class UnitLiteral() extends Literal {
+  case class UnitLiteral() extends Expr {
     def getType = UnitType
   }
 
@@ -123,12 +116,11 @@ object Trees {
       }
     }
 
-    def unapply(t: And): Option[List[Expr]] = {
-      Some(t.exprs) 
-    }.ensuring(res => {
-      res match
-        case Some(v) => v.size >= 2 
-    })
+    def unapply(e: Expr): Option[List[Expr]] = {
+      e match
+        case t : And => Some(t.exprs)
+        case _ => None()
+    }
   }
 
   /** $encodingof `... || ...`
@@ -158,13 +150,11 @@ object Trees {
       new Or(exprs)
     }
 
-    def unapply(t: Or): Option[List[Expr]] = {
-      assert(t.exprs.size >= 2)
-      Some(t.exprs) 
-    }.ensuring(res => {
-      res match
-        case Some(v) => v.size >= 2 
-    })
+    def unapply(e: Expr): Option[List[Expr]] = {
+      e match
+        case t : Or => Some(t.exprs)
+        case _ => None() 
+    }
   }
 
   /** $encodingof `... ==> ...` (logical implication).
@@ -241,8 +231,10 @@ object Trees {
       new IntPow(base, exp)
     }
 
-    def unapply(t: IntPow): Option[(Expr, BigInt)] = {
-      Some((t.base, t.exp)) 
+    def unapply(e: Expr): Option[(Expr, BigInt)] = {
+      e match
+        case t : IntPow => Some(t.base, t.exp) 
+        case _ => None()
     }
 
   }

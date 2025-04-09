@@ -26,10 +26,8 @@ object ListsTheorems {
   }.ensuring(l.size >= 2)
 
 
-  @opaque
   def treeSize(e: Expr) : BigInt = {
     BigInt(1) + (e match
-      case NoTree(tpe) => 0
       case IntegerLiteral(value) => 0
       case BooleanLiteral(value) => 0
       case UnitLiteral() => 0
@@ -47,12 +45,12 @@ object ListsTheorems {
       case Times(lhs, rhs) => treeSize(lhs) + treeSize(rhs)
       case FMA(fac1, fac2, s) => treeSize(fac1) + treeSize(fac2) + treeSize(s)
       case Division(lhs, rhs) => treeSize(lhs) + treeSize(rhs)
-      case IntPow(base, exp) => 1
-        // treeSize(base)
+      case IntPow(base, exp) => treeSize(base)
       case LessThan(lhs, rhs) => treeSize(lhs) + treeSize(rhs)
       case GreaterThan(lhs, rhs) => treeSize(lhs) + treeSize(rhs)
       case LessEquals(lhs, rhs) => treeSize(lhs) + treeSize(rhs)
-      case GreaterEquals(lhs, rhs) => treeSize(lhs) + treeSize(rhs))
+      case GreaterEquals(lhs, rhs) => treeSize(lhs) + treeSize(rhs)
+      case _ => 0)
   }.ensuring(res => res > 0)
 
 }
