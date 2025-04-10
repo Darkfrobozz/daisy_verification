@@ -43,8 +43,8 @@ object Trees {
         case IntegerLiteral(value) => 0
         case BooleanLiteral(value) => 0
         case UnitLiteral() => 0
-        case And(exprs) => 0
-        case Or(exprs) => 0
+        case And(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case Or(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case Equals(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case Implies(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case Not(expr) => complexity(expr)
@@ -58,8 +58,7 @@ object Trees {
         case LessThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case GreaterThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case LessEquals(lhs, rhs) => complexity(lhs) + complexity(rhs)
-        case GreaterEquals(lhs, rhs) => complexity(lhs) + complexity(rhs))
-      
+        case GreaterEquals(lhs, rhs) => complexity(lhs) + complexity(rhs)) 
     }.ensuring(res => res > 0)
 
     @ignore
@@ -74,8 +73,8 @@ object Trees {
         case GreaterEquals(lhs, rhs) => BooleanType  
         case Equals(lhs, rhs) => if (getType(lhs) == getType(rhs)) BooleanType else Untyped 
         // This should assume that list terminates
-        case And(exprs) => getType(And(exprs)) 
-        case Or(exprs) => getType(Or(exprs))
+        case And(lhs, rhs) => BooleanType
+        case Or(lhs, rhs) => BooleanType
         case Implies(lhs, rhs) => if (getType(lhs) == BooleanType && getType(rhs) == BooleanType) BooleanType else Untyped
         case Not(expr) => if (getType(expr) == BooleanType) BooleanType else Untyped
         case Plus(lhs, rhs) => getType(lhs)
@@ -115,7 +114,7 @@ object Trees {
    * you should use [[purescala.Constructors#and purescala's constructor and]]
    * or [[purescala.Constructors#andJoin purescala's constructor andJoin]]
    */
-  case class And(exprs: List[Expr]) extends Expr {
+  case class And(lhs: Expr, rhs: Expr) extends Expr {
     // require(exprs.size >= 2)
   }
 
@@ -159,7 +158,7 @@ object Trees {
    * you should use [[purescala.Constructors#or purescala's constructor or]] or
    * [[purescala.Constructors#orJoin purescala's constructor orJoin]]
    */
-  case class Or(exprs: List[Expr]) extends Expr {
+  case class Or(lhs : Expr, rhs: Expr) extends Expr {
     // require(exprs.size >= 2)
   }
 
