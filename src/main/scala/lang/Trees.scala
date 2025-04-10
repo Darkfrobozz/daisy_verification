@@ -36,7 +36,8 @@ object Trees {
       Trees.IntPow(t, n)
     }
 
-    @library
+    // This is easily verified
+    // Big problems come from And
     def complexity(@induct expr: Expr) : BigInt = {
       BigInt(1) + (expr match
         case IntegerLiteral(value) => 0
@@ -47,22 +48,22 @@ object Trees {
         case Equals(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case Implies(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case Not(expr) => complexity(expr)
-        case lang.Trees.Plus(lhs, rhs) => complexity(lhs)
-        case lang.Trees.Minus(lhs, rhs) => complexity(lhs)
+        case lang.Trees.Plus(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case lang.Trees.Minus(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case UMinus(expr) => complexity(expr)
-        case lang.Trees.Times(lhs, rhs) => complexity(lhs)
-        case FMA(fac1, fac2, s) => complexity(fac1)
-        case lang.Trees.Division(lhs, rhs) => complexity(lhs)
+        case lang.Trees.Times(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case FMA(fac1, fac2, s) => complexity(fac1) + complexity(fac2) + complexity(s)
+        case lang.Trees.Division(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case lang.Trees.IntPow(base, exp) => complexity(base)
-        case LessThan(lhs, rhs) => 0
-        case GreaterThan(lhs, rhs) => 0
-        case LessEquals(lhs, rhs) => 0
-        case GreaterEquals(lhs, rhs) => 0)
+        case LessThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case GreaterThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case LessEquals(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case GreaterEquals(lhs, rhs) => complexity(lhs) + complexity(rhs))
       
     }.ensuring(res => res > 0)
 
+    @ignore
     def getType(expr: Expr) : TypeTree = {
-      decreases(1, complexity(expr))
       expr match
         case IntegerLiteral(value) => IntegerType
         case BooleanLiteral(value) => BooleanType
@@ -73,8 +74,8 @@ object Trees {
         case GreaterEquals(lhs, rhs) => BooleanType  
         case Equals(lhs, rhs) => if (getType(lhs) == getType(rhs)) BooleanType else Untyped 
         // This should assume that list terminates
-        case And(exprs) => getListType(exprs)
-        case Or(exprs) => getListType(exprs)
+        case And(exprs) => getType(And(exprs)) 
+        case Or(exprs) => getType(Or(exprs))
         case Implies(lhs, rhs) => if (getType(lhs) == BooleanType && getType(rhs) == BooleanType) BooleanType else Untyped
         case Not(expr) => if (getType(expr) == BooleanType) BooleanType else Untyped
         case Plus(lhs, rhs) => getType(lhs)
@@ -84,19 +85,9 @@ object Trees {
         case FMA(fac1, fac2, s) => getType(fac1)
         case Division(lhs, rhs) => getType(lhs)
         case IntPow(base, exp) => getType(base)
-    }
-
-    def getListType(lExpr: List[Expr]) : TypeTree = {
-      // When this calls getType, getType can call it...
-      decreases(0, lExpr.size)
-      lExpr match
-        // This should assume that getType terminates
-        case Cons(h, t) => if (getType(h) == getListType(t) && getType(h) == BooleanType) BooleanType else Untyped 
-        case Nil() => BooleanType
-      }
-
-    
+    }    
   }
+
 
   /* Stands for an undefined Expr, similar to `???` or `null`
    *

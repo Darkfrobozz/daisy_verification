@@ -74,6 +74,8 @@ object Extractors {
       case GreaterEquals(t1, t2) =>
         Some(List(t1, t2), (es: List[Expr]) => GreaterEquals(es(0), es(1)))
 
+      
+      // Big change made here
       case And(args) => Some((args, And.apply))
       case Or(args) => Some((args, Or.apply))
 
