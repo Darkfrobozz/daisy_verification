@@ -96,7 +96,7 @@ object Trees {
         case GreaterEquals(lhs, rhs) => complexity(lhs) + complexity(rhs)) 
     }.ensuring(res => res > 0)
 
-    @ignore
+    @library
     def getType(expr: Expr) : TypeTree = {
       expr match
         case IntegerLiteral(value) => IntegerType

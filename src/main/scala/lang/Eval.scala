@@ -18,20 +18,19 @@ object Eval {
   def pow(base: BigInt, exp: BigInt) : BigInt = {
     decreases(exp)
     require(exp >= 0)
-    if (exp == 0) BigInt(1) else pow(base, exp - 1) * base
+    base
   }.ensuring(res => (base == 0 && res == 0) || res >= 1)
 
-  def evalBinaryHelper(e1: Expr, e2: Expr, op: Operation) = {
-    for {
-      a <- evalInt(e1)
-      b <- evalInt(e2)
-    } yield {
-      op match
-        case Add => a + b
-        case Mul => a * b
-        case Div => a / b
-        case Sub => a - b 
-    }
+  def evalBinaryHelper(e1: Expr, e2: Expr, op: Operation) : Option[BigInt] = {
+    (evalInt(e1), evalInt(e2)) match
+      case (Some(a), Some(b)) => 
+        op match
+          case Add => Some(a + b)
+          case Mul => Some(a * b)
+          case Div if b != 0 => Some(a / b)
+          case Sub => Some(a - b) 
+          case _ => None[BigInt]()
+      case _ => None[BigInt]()
   }
 
   def evalInt(e: Expr): Option[BigInt] = {
@@ -49,7 +48,7 @@ object Eval {
       }
       case UMinus(x) => evalInt(x).map(-_)
       case IntegerLiteral(value) => Some(value)
-      case _ => None()
+      case _ => None[BigInt]()
     }
   }
 }
