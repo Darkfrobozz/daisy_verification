@@ -250,7 +250,8 @@ object Trees {
   case class Division(lhs: Expr, rhs: Expr) extends Expr 
 
 
-  case class IntPow(base: Expr, exp: BigInt) extends Expr
+  case class IntPow(base: Expr, exp: BigInt) extends Expr {
+  }
 
   // object IntPow {
   //   def apply(base: Expr, exp: BigInt) = {
