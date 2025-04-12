@@ -6,7 +6,7 @@ package lang
 import stainless.collection.*
 import stainless.collection.List.*
 import stainless.annotation._
-import ListsTheorems._
+import ListsTheorems.*
 
 // These should be removed
 object Trees {
@@ -32,7 +32,6 @@ object Trees {
     def Times(t: Expr, that: Expr): Expr = Trees.Times(t, that)
     def Division(t: Expr, that: Expr): Expr = Trees.Division(t, that)
     def IntPow(t: Expr, n: BigInt): Expr = {
-      require(n > 0)
       Trees.IntPow(t, n)
     }
   }
@@ -215,17 +214,9 @@ object Trees {
 
 
   case class IntPow(base: Expr, exp: BigInt) extends Expr {
+    require(exp > 0)
     override def getType: TypeTree = base.getType
   }
-
-  object IntPow {
-    def apply(base: Expr, exp: BigInt) = {
-      require(exp > 0)
-      new IntPow(base, exp)
-    }
-
-  }
-
 
   /*  Comparisons */
 
