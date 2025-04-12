@@ -217,6 +217,14 @@ object Trees {
     require(exp > 0)
     override def getType: TypeTree = base.getType
   }
+  
+  // This easily finds the counter-example
+  object IntPow {
+    def apply(base: Expr, exp: BigInt) : IntPow = {
+      require(exp > 0)
+      new IntPow(base, exp)
+    }
+  }
 
   /*  Comparisons */
 
