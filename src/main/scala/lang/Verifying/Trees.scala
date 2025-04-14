@@ -55,7 +55,7 @@ object Trees {
 
 
   case class IntPow(base: Expr, exp: BigInt) extends Expr {
-    require(exp >= 0)
+    // require(exp >= 0)
   }
   /*  Comparisons */
 
