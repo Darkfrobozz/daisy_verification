@@ -2,15 +2,55 @@ package lang
 import Trees._
 import stainless.annotation.*
 import stainless.lang.*
-import lang.Trees.Expr.complexity
 
-sealed trait Operation
+case class BooleanResult(val result: Boolean) extends Result
+case class IntResult(val result: BigInt) extends Result
+case object Err extends Result
+sealed trait Result {
+  def op(x: Result, e: Expr) : Result  = {
+    (this, x) match
+      case (BooleanResult(a), BooleanResult(b)) => e match
+        case Implies(_, _) => BooleanResult(!a || b)
+        case And(_, _) => BooleanResult(a && b)
+        case Or(_, _) => BooleanResult(a && b)
+        case _ => Err
+      
+      case (IntResult(a), IntResult(b)) => e match 
+        case Plus(_, _) => IntResult(a + b)
+        case Minus(_, _) => IntResult(a - b)
+        case Times(_, _) => IntResult(a * b)
+        case Division(_, _) if b != 0 => IntResult(a / b)
+        case IntPow(_, _) if b >= 0 => IntResult(Eval.pow(a, b))
+        case Equals(_, _) => BooleanResult(a == b)
+        case LessThan(_, _) => BooleanResult(a < b)
+        case GreaterThan(_, _) => BooleanResult(a > b)
+        case LessEquals(_, _) => BooleanResult(a <= b)
+        case GreaterEquals(_, _) => BooleanResult(a >= b)
+        case _ => Err
+      
+      case _ => Err
+  }
 
-case object Add extends Operation
-case object Mul extends Operation
-case object Div extends Operation
-case object Sub extends Operation
+  def op(e: Expr) : Result = {
+    this match
+      case BooleanResult(a) => e match
+        case Not(expr) => BooleanResult(!a)
+        case _ => Err 
+      case IntResult(a) => e match
+        case UMinus(expr) => IntResult(-a) 
+        case _ => Err
+      case Err => Err
+  }
 
+  def op(x: Result, y: Result, e: Expr): Result = {
+    (this, x, y) match
+      case (IntResult(a), IntResult(b), IntResult(c)) => e match
+        case FMA(fac1, fac2, s) => IntResult(a * b + c)
+        case _ => Err
+      case _ => Err
+  }
+
+}
 
 object Eval {
 
@@ -26,41 +66,32 @@ object Eval {
       || (res != 0 && base != 0))
     )
 
-  @library
-  def evalBinaryHelper(e1: Option[BigInt], e2: Option[BigInt], op: Operation) : Option[BigInt] = {
-    e1 match
-      case Some(a) => e2 match
-        case Some(b) => 
-          op match
-            case Add => Some(a + b)
-            case Mul => Some(a * b)
-            case Div if b != 0 => Some(a / b)
-            case Sub => Some(a - b) 
-            case _ => None[BigInt]()
-        case None() => None()
-      case None() => None()
-  }
-
-  @library
-  def evalInt(e: Expr): Option[BigInt] = {
-    decreases(complexity(e))
-    e match {
-      case Plus(x, y) => evalBinaryHelper(evalInt(x), evalInt(y), Add)
-      case Minus(x, y) => evalBinaryHelper(evalInt(x), evalInt(y), Sub)
-      case Times(x, y) => evalBinaryHelper(evalInt(x), evalInt(y), Mul)
-      case Division(x, y) => evalBinaryHelper(evalInt(x), evalInt(y), Div)
-      case IntPow(x, y) => {
-        val base = evalInt(x)
-        base match
-          case Some(v) => if (y >= 0) Some(pow(v, y)) else None()
-          case None() => None()
-      }
-      case UMinus(x) => evalInt(x).map(-_)
-      case IntegerLiteral(value) => Some(value)
-      case _ => None[BigInt]()
-    }
+  def eval(e: Expr): Result = {
+    decreases(Expr.complexity(e))
+    e match
+      case IntegerLiteral(value) => IntResult(value)
+      case BooleanLiteral(value) => BooleanResult(value)
+      case UnitLiteral() => Err
+      case Equals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case And(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case Or(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case Implies(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case Not(expr) => eval(expr).op(e)
+      case Plus(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case Minus(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case UMinus(expr) => eval(expr).op(e)
+      case Times(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case FMA(fac1, fac2, s) => eval(fac1).op(eval(fac2), eval(s), e)
+      case Division(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case IntPow(base, exp) => eval(base).op(IntResult(exp), e)
+      case LessThan(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case GreaterThan(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case LessEquals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case GreaterEquals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+    
   }
 }
+
 
 // All the evaluation functions but commented:
 //   def evalRational(expr: Expr, _valMap: Map[Identifier, Rational]): Rational = {
