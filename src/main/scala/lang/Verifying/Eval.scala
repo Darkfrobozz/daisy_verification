@@ -4,8 +4,15 @@ import stainless.annotation.*
 import stainless.lang.*
 
 case class BooleanResult(val result: Boolean) extends Result
+
 case class IntResult(val result: BigInt) extends Result
-case object Err extends Result
+case object ArthErr extends Result
+
+
+case object TypeErr extends Result
+
+
+
 sealed trait Result {
   def op(x: Result, e: Expr) : Result  = {
     (this, x) match
@@ -13,7 +20,7 @@ sealed trait Result {
         case Implies(_, _) => BooleanResult(!a || b)
         case And(_, _) => BooleanResult(a && b)
         case Or(_, _) => BooleanResult(a && b)
-        case _ => Err
+        case _ => TypeErr
       
       case (IntResult(a), IntResult(b)) => e match 
         case Plus(_, _) => IntResult(a + b)
@@ -26,34 +33,56 @@ sealed trait Result {
         case GreaterThan(_, _) => BooleanResult(a > b)
         case LessEquals(_, _) => BooleanResult(a <= b)
         case GreaterEquals(_, _) => BooleanResult(a >= b)
-        case _ => Err
+        case Division(_, _) if b == 0 => ArthErr
+        case _ => TypeErr
       
-      case _ => Err
+      case (IntResult(_), ArthErr) => Eval.arthdealer(e)
+      case (ArthErr, ArthErr) => Eval.arthdealer(e)
+      case (ArthErr, IntResult(_)) => Eval.arthdealer(e)
+       
+      case _ => TypeErr
   }
+
 
   def op(e: Expr) : Result = {
     this match
       case BooleanResult(a) => e match
         case Not(expr) => BooleanResult(!a)
-        case _ => Err 
+        case _ => TypeErr 
       case IntResult(a) => e match
         case UMinus(expr) => IntResult(-a) 
-        case _ => Err
-      case Err => Err
+        case _ => TypeErr
+      case ArthErr => e match
+        case UMinus(_) => ArthErr
+        case _ => TypeErr
+      case TypeErr => TypeErr
   }
 
   def op(x: Result, y: Result, e: Expr): Result = {
     (this, x, y) match
       case (IntResult(a), IntResult(b), IntResult(c)) => e match
         case FMA(fac1, fac2, s) => IntResult(a * b + c)
-        case _ => Err
-      case _ => Err
+        case _ => TypeErr
+      case _ => TypeErr
+      
   }
 
 }
 
 object Eval {
 
+  def arthdealer(e: Expr) : Result = e match
+    case Equals(lhs, rhs) => ArthErr
+    case Plus(lhs, rhs) => ArthErr
+    case Minus(lhs, rhs) => ArthErr
+    case Times(lhs, rhs) => ArthErr
+    case Division(lhs, rhs) => ArthErr
+    case IntPow(base, exp) => ArthErr
+    case LessThan(lhs, rhs) => ArthErr
+    case GreaterThan(lhs, rhs) => ArthErr
+    case LessEquals(lhs, rhs) => ArthErr
+    case GreaterEquals(lhs, rhs) => ArthErr
+    case _ => TypeErr 
 
   // Handle 0 ^ 0 by setting it equal 1
   def pow(base: BigInt, exp: BigInt) : BigInt = {
@@ -71,7 +100,7 @@ object Eval {
     e match
       case IntegerLiteral(value) => IntResult(value)
       case BooleanLiteral(value) => BooleanResult(value)
-      case UnitLiteral() => Err
+      case UnitLiteral() => TypeErr
       case Equals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case And(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case Or(lhs, rhs) => eval(lhs).op(eval(rhs), e)
