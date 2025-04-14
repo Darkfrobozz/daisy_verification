@@ -36,44 +36,10 @@ object Trees {
       Trees.IntPow(t, n)
     }
 
-    def andConverter(expr: Expr) : List[Expr] = {
-      decreases(complexity(expr))
-      require(expr match
-        case And(lhs, rhs) => true
-        case _ => false
-      )
-      expr match
-        case And(lhs, rhs) => rhs match
-          case And(lhs2, rhs2) => Cons(lhs, andConverter(rhs)) 
-          case _ => Cons(lhs, Nil())
-    }
-
-    def orConverter(expr: Expr) : List[Expr] = {
-      decreases(complexity(expr))
-      require(expr match
-        case Or(lhs, rhs) => true
-        case _ => false
-      )
-      expr match
-        case Or(lhs, rhs) => rhs match
-          case Or(lhs2, rhs2) => Cons(lhs, orConverter(rhs)) 
-          case _ => Cons(lhs, Nil())
-    }
-
-    def listToAnd(l: List[Expr]) : Expr = {
-      require(l.size >= 2)
-      decreases(l.size)
-      l match
-        case Cons(h, t) => t match
-          case Cons(h2, t2) => t2 match
-            case Cons(h3, t3) => And(h, listToAnd(t))
-            case Nil() => And(h, h2) 
-    }
-
     // This is easily verified
     // Big problems come from And
-    @library
-    def complexity(@induct expr: Expr) : BigInt = {
+    def complexity(expr: Expr) : BigInt = {
+      decreases(expr)
       BigInt(1) + (expr match
         case IntegerLiteral(value) => 0
         case BooleanLiteral(value) => 0
@@ -251,6 +217,7 @@ object Trees {
 
 
   case class IntPow(base: Expr, exp: BigInt) extends Expr {
+    require(exp >= 0)
   }
 
   // object IntPow {
