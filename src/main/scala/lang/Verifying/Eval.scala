@@ -4,15 +4,15 @@ import stainless.annotation.*
 import stainless.lang.*
 
 case class BooleanResult(val result: Boolean) extends Result
-
 case class IntResult(val result: BigInt) extends Result
 case object ArthErr extends Result
-
-
 case object TypeErr extends Result
 
-
-
+// Results are made such that they can be chained together
+// The primary aim of this is to be able to handle errors
+// For example, if we have a BooleanResult and an IntResult combined in a plus, we get a TypeError
+// If we have a well-typed expression, but we have division by zero, we get an ArthErr
+// We aim to eventually prove that if it is well-typed, the only error possible is ArthErr.
 sealed trait Result {
   def op(x: Result, e: Expr) : Result  = {
     (this, x) match
@@ -35,11 +35,20 @@ sealed trait Result {
         case GreaterEquals(_, _) => BooleanResult(a >= b)
         case Division(_, _) if b == 0 => ArthErr
         case _ => TypeErr
-      
-      case (IntResult(_), ArthErr) => Eval.arthdealer(e)
-      case (ArthErr, ArthErr) => Eval.arthdealer(e)
-      case (ArthErr, IntResult(_)) => Eval.arthdealer(e)
-       
+
+      case IntOrArth(()) => e match
+        case Equals(lhs, rhs) => ArthErr
+        case Plus(lhs, rhs) => ArthErr
+        case Minus(lhs, rhs) => ArthErr
+        case Times(lhs, rhs) => ArthErr
+        case Division(lhs, rhs) => ArthErr
+        case IntPow(base, exp) => ArthErr
+        case LessThan(lhs, rhs) => ArthErr
+        case GreaterThan(lhs, rhs) => ArthErr
+        case LessEquals(lhs, rhs) => ArthErr
+        case GreaterEquals(lhs, rhs) => ArthErr
+        case _ => TypeErr 
+
       case _ => TypeErr
   }
 
@@ -60,29 +69,50 @@ sealed trait Result {
 
   def op(x: Result, y: Result, e: Expr): Result = {
     (this, x, y) match
-      case (IntResult(a), IntResult(b), IntResult(c)) => e match
+      case (IntResult(a) , IntResult(b) , IntResult(c)) => e match
         case FMA(fac1, fac2, s) => IntResult(a * b + c)
         case _ => TypeErr
+      case IntOrArth(()) => e match
+        case FMA(fac1, fac2, s) => ArthErr
+        case _ => TypeErr
+      
       case _ => TypeErr
       
   }
 
 }
 
-object Eval {
+object IntOrArth {
+  def unapply(res: (Result, Result, Result)): Option[Unit] = {
+    val (x, y, z) = res
+    x match
+      case IntOrArth(()) => y match
+        case IntOrArth(()) => z match
+          case IntOrArth(()) => Some(())
+          case _ => None() 
+        case _ => None() 
+      case _ => None()
+  }
 
-  def arthdealer(e: Expr) : Result = e match
-    case Equals(lhs, rhs) => ArthErr
-    case Plus(lhs, rhs) => ArthErr
-    case Minus(lhs, rhs) => ArthErr
-    case Times(lhs, rhs) => ArthErr
-    case Division(lhs, rhs) => ArthErr
-    case IntPow(base, exp) => ArthErr
-    case LessThan(lhs, rhs) => ArthErr
-    case GreaterThan(lhs, rhs) => ArthErr
-    case LessEquals(lhs, rhs) => ArthErr
-    case GreaterEquals(lhs, rhs) => ArthErr
-    case _ => TypeErr 
+  def unapply(res: (Result, Result)): Option[Unit] = {
+    val (x, y) = res
+    x match 
+      case IntOrArth(()) => y match 
+        case IntOrArth(()) => Some(())
+        case _ => None() 
+      case _ => None() 
+  }
+
+  def unapply(res : Result) : Option[Unit] = {
+    val x = res
+    x match
+      case IntResult(result) => Some(())
+      case ArthErr => Some(())
+      case _ => None()
+  }
+}
+
+object Eval {
 
   // Handle 0 ^ 0 by setting it equal 1
   def pow(base: BigInt, exp: BigInt) : BigInt = {
