@@ -34,19 +34,20 @@ sealed trait Result {
         case LessEquals(_, _) => BooleanResult(a <= b)
         case GreaterEquals(_, _) => BooleanResult(a >= b)
         case Division(_, _) if b == 0 => ArthErr
+        case IntPow(_, _) if b < 0 => ArthErr 
         case _ => TypeErr
 
       case IntOrArth(()) => e match
-        case Equals(lhs, rhs) => ArthErr
-        case Plus(lhs, rhs) => ArthErr
-        case Minus(lhs, rhs) => ArthErr
-        case Times(lhs, rhs) => ArthErr
-        case Division(lhs, rhs) => ArthErr
-        case IntPow(base, exp) => ArthErr
-        case LessThan(lhs, rhs) => ArthErr
-        case GreaterThan(lhs, rhs) => ArthErr
-        case LessEquals(lhs, rhs) => ArthErr
-        case GreaterEquals(lhs, rhs) => ArthErr
+        case Equals(_, _) => ArthErr
+        case Plus(_, _) => ArthErr
+        case Minus(_, _) => ArthErr
+        case Times(_, _) => ArthErr
+        case Division(_, _) => ArthErr
+        case IntPow(_, _) => ArthErr
+        case LessThan(_, _) => ArthErr
+        case GreaterThan(_, _) => ArthErr
+        case LessEquals(_, _) => ArthErr
+        case GreaterEquals(_, _) => ArthErr
         case _ => TypeErr 
 
       case _ => TypeErr
@@ -56,10 +57,10 @@ sealed trait Result {
   def op(e: Expr) : Result = {
     this match
       case BooleanResult(a) => e match
-        case Not(expr) => BooleanResult(!a)
+        case Not(_) => BooleanResult(!a)
         case _ => TypeErr 
       case IntResult(a) => e match
-        case UMinus(expr) => IntResult(-a) 
+        case UMinus(_) => IntResult(-a) 
         case _ => TypeErr
       case ArthErr => e match
         case UMinus(_) => ArthErr
@@ -70,10 +71,10 @@ sealed trait Result {
   def op(x: Result, y: Result, e: Expr): Result = {
     (this, x, y) match
       case (IntResult(a) , IntResult(b) , IntResult(c)) => e match
-        case FMA(fac1, fac2, s) => IntResult(a * b + c)
+        case FMA(_, _, _) => IntResult(a * b + c)
         case _ => TypeErr
       case IntOrArth(()) => e match
-        case FMA(fac1, fac2, s) => ArthErr
+        case FMA(_, _, _) => ArthErr
         case _ => TypeErr
       
       case _ => TypeErr
