@@ -15,7 +15,7 @@ object Constructors {
   def and(exprs: List[Expr]): Expr = {
     // mutable
     val flat = exprs.flatMap {
-      case And(es) => es
+      case And(lhs, rhs) => Expr.andConverter(And(lhs, rhs))
       case o => List(o)
     }
 
@@ -98,7 +98,6 @@ object Constructors {
    * @see [[purescala.Expressions.Not Not]]
    */
   def not(e: Expr): Expr = negate(e)
-
 
   /** $encodingof simplified `... + ...` (plus).
    * @see [[purescala.Expressions.Plus Plus]]

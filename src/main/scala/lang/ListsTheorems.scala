@@ -24,4 +24,15 @@ object ListsTheorems {
     )
 
   }.ensuring(l.size >= 2)
+
+  @opaque
+  def addedLists(l1 : List[Expr], l2 : List[Expr], t : Expr => Boolean) : Unit = {
+    require(l1.forall(t) && l2.forall(t))
+    l1 match
+      case Cons(h, tl) =>
+        assert(t(h))
+        addedLists(tl, l2, t)
+      case Nil() =>
+        assert(l2.forall(t))  
+  }.ensuring((l1 ++ l2).forall(t))
 }

@@ -126,6 +126,7 @@ object Eval {
       || (res != 0 && base != 0))
     )
 
+  @library
   def eval(e: Expr): Result = {
     decreases(Expr.complexity(e))
     e match
