@@ -29,8 +29,8 @@ object TreeOps {
     (expr match {
       case Not(e) => e
       case Implies(e1,e2) => and(List(e1, negate(e2)))
-      case Or(exs) => and(exs.map(negate))
-      case And(exs) => or(exs.map(negate))
+      case Or(lhs, rhs) => and(List(negate(lhs), negate(rhs)))
+      case And(lhs, rhs) => and(List(negate(lhs), negate(rhs)))
       case LessThan(e1,e2) => GreaterEquals(e1,e2)
       case LessEquals(e1,e2) => GreaterThan(e1,e2)
       case GreaterThan(e1,e2) => LessEquals(e1,e2)

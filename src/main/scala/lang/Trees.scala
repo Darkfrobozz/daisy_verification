@@ -61,7 +61,7 @@ object Trees {
             andConverter(lhs) ++ andConverter(rhs)
           case (And(_, _), _) => Cons(rhs, andConverter(lhs))
           case (_, And(_, _)) => Cons(lhs, andConverter(rhs))
-          case _ => Cons(lhs, Nil())
+          case _ => Cons(lhs, Cons(rhs, Nil()))
       }
     }.ensuring(res => res.forall(p => p match
       case And(_, _) => false
@@ -84,7 +84,7 @@ object Trees {
             orConverter(lhs) ++ orConverter(rhs)
           case (Or(_, _), _) => Cons(rhs, orConverter(lhs))
           case (_, Or(_, _)) => Cons(lhs, orConverter(rhs))
-          case _ => Cons(lhs, Nil())
+          case _ => Cons(lhs, Cons(rhs, Nil()))
       }
     }.ensuring(res => res.forall(p => p match
       case Or(_, _) => false

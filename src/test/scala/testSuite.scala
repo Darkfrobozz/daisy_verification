@@ -7,8 +7,13 @@ import lang.Eval.eval
 
 import stainless.collection.*
 import stainless.collection.List.*
+import lang.IntResult
 // For more information on writing tests, see
 // https://scalameta.org/munit/docs/getting-started.html
+
+class MyFocusSuite extends munit.FunSuite {
+}
+  
 class MySuite extends munit.FunSuite {
   test("Testing 5 * 1") {
     val k = Times(IntegerLiteral(5), IntegerLiteral(1))
@@ -37,6 +42,15 @@ class MySuite extends munit.FunSuite {
       case _ => None 
   }
 
+  test("Testing andConverter 1") {
+    val a = BooleanLiteral(true)
+    val b = BooleanLiteral(true)
+    val c = BooleanLiteral(true)
+    val d = BooleanLiteral(false)
+    val res1 = Expr.andConverter(And(a,And(b, And(c, d))))
+    assertEquals(res1, List[Expr](a, b, c, d))
+  }
+
   // test("Testing  PostMap example") {
   //   val a = IntegerLiteral(5)
   //   val b = IntegerLiteral(4)
@@ -47,7 +61,7 @@ class MySuite extends munit.FunSuite {
   //   assertEquals(res1, Plus(a, b))
   // }
 
-  test("Testing and optimization") {
+  test("Testing and optimization 1") {
     val a = BooleanLiteral(true)
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
@@ -57,22 +71,22 @@ class MySuite extends munit.FunSuite {
   }
 
 
-  test("Testing and optimization") {
+  test("Testing and optimization 2") {
     val a = BooleanLiteral(true)
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
-    val d = Or(List(a, b, c, BooleanLiteral(false)))
+    val d = Expr.listToAnd(List(a, b, c, BooleanLiteral(false)))
     val e = BooleanLiteral(false)
     val res1 = Constructors.and(List(a, b, c, d, e))
     assertEquals(res1, BooleanLiteral(false))
   }
 
-  test("Testing and optimization") {
+  test("Testing and optimization 3") {
     val a = BooleanLiteral(true)
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
     val d = BooleanLiteral(false)
-    val res1 = Constructors.and(List(a, b, c, a, And.make(List(a, b, c, d))))
+    val res1 = Constructors.and(List(a, b, c, a, Expr.listToAnd(List(a, b, c, d))))
     assertEquals(res1, BooleanLiteral(false))
   }
 
@@ -96,6 +110,6 @@ class MySuite extends munit.FunSuite {
   test("Using eval") {
     val a = IntegerLiteral(5)
     val b = IntegerLiteral(4)
-    assertEquals(eval(Plus(a, b)), BigInt(9))
+    assertEquals(eval(Plus(a, b)), IntResult(BigInt(9)))
   }
 }

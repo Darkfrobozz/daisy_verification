@@ -76,11 +76,25 @@ object Extractors {
 
       
       // Big change made here
-      case And(args) => Some((args, And.apply))
-      case Or(args) => Some((args, Or.apply))
+      case And(t1, t2) => Some(List(t1, t2), (es: List[Expr]) => And(es(0), es(1)))
+      case Or(t1, t2) => Some((List(t1, t2), (es: List[Expr]) => Or(es(0), es(1))))
 
       /* Terminals */
       // case t: Terminal => Some(List[Expr](), (_: List[Expr]) => t)
+      case Terminal(()) => Some(List[Expr](), (_: List[Expr]) => expr)
     }
   }
+}
+
+object Terminal {
+
+  def unapply(expr: Expr) : Option[Unit] = {
+    expr match {
+      case IntegerLiteral(value) => Some(())
+      case UnitLiteral() => Some(())
+      case BooleanLiteral(value) => Some(())
+      case _ => None
+    }
+  }
+  
 }
