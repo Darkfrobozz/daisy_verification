@@ -2,11 +2,10 @@
 // Modified work Copyright 2017 MPI-SWS, Saarbruecken, Germany
 package lang
 
-import Trees._
-import TreeOps._
-
 import stainless.collection.*
 import stainless.collection.List.*
+import Trees.*
+import TreeOps.*
 
 object Constructors {
   /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
@@ -14,7 +13,8 @@ object Constructors {
    */
   def and(exprs: List[Expr]): Expr = {
     // mutable
-    val flat = exprs.flatMap {
+    val flat : List[Expr] = exprs.flatMap {
+      // This flattens and:s
       case And(lhs, rhs) => Expr.andConverter(And(lhs, rhs))
       case o => List(o)
     }
@@ -40,7 +40,7 @@ object Constructors {
 
     if (simpler.length == 0) BooleanLiteral(true)
     else if (simpler.length == 1) simpler.head
-    else And(simpler)
+    else Expr.listToAnd(simpler)
 
   }
 
@@ -53,7 +53,7 @@ object Constructors {
    */
   def or(exprs: List[Expr]): Expr = {
     val flat = exprs.flatMap {
-      case Or(es) => es
+      case Or(rhs, lhs) => Expr.orConverter(Or(rhs, lhs))
       case o => List(o)
     }
 
@@ -80,7 +80,7 @@ object Constructors {
     simpler match {
       case Nil()  => BooleanLiteral(false)
       case Cons(x, Nil()) => x
-      case _      => Or(simpler)
+      case _      => Expr.listToOr(simpler)
     }
   }
 
