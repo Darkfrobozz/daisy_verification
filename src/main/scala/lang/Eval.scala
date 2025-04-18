@@ -8,7 +8,6 @@ import lang.Eval.eval
 case class BooleanResult(val result: Boolean) extends Result
 case class IntResult(val result: BigInt) extends Result
 case object UnitResult extends Result
-case object ArthErr extends Result
 case object TypeErr extends Result
 
 // Results are made such that they can be chained together
@@ -36,22 +35,9 @@ sealed trait Result {
         case GreaterThan(_, _) => BooleanResult(a > b)
         case LessEquals(_, _) => BooleanResult(a <= b)
         case GreaterEquals(_, _) => BooleanResult(a >= b)
-        case Division(_, _) if b == 0 => ArthErr
-        case IntPow(_, _) if b < 0 => ArthErr 
+        case Division(_, _) if b == 0 => TypeErr
+        case IntPow(_, _) if b < 0 => TypeErr
         case _ => TypeErr
-
-      case IntOrArth(()) => e match
-        case Equals(_, _) => ArthErr
-        case Plus(_, _) => ArthErr
-        case Minus(_, _) => ArthErr
-        case Times(_, _) => ArthErr
-        case Division(_, _) => ArthErr
-        case IntPow(_, _) => ArthErr
-        case LessThan(_, _) => ArthErr
-        case GreaterThan(_, _) => ArthErr
-        case LessEquals(_, _) => ArthErr
-        case GreaterEquals(_, _) => ArthErr
-        case _ => TypeErr 
 
       case _ => TypeErr
   }
@@ -65,9 +51,6 @@ sealed trait Result {
       case IntResult(a) => e match
         case UMinus(_) => IntResult(-a) 
         case _ => TypeErr
-      case ArthErr => e match
-        case UMinus(_) => ArthErr
-        case _ => TypeErr
       case TypeErr => TypeErr
       case UnitResult => TypeErr
   }
@@ -76,45 +59,11 @@ sealed trait Result {
     (this, x, y) match
       case (IntResult(a) , IntResult(b) , IntResult(c)) => e match
         case FMA(_, _, _) => IntResult(a * b + c)
-        case _ => TypeErr
-      case IntOrArth(()) => e match
-        case FMA(_, _, _) => ArthErr
-        case _ => TypeErr
-      
+        case _ => TypeErr      
       case _ => TypeErr
       
   }
 
-}
-
-object IntOrArth {
-  def unapply(res: (Result, Result, Result)): Option[Unit] = {
-    val (x, y, z) = res
-    x match
-      case IntOrArth(()) => y match
-        case IntOrArth(()) => z match
-          case IntOrArth(()) => Some(())
-          case _ => None() 
-        case _ => None() 
-      case _ => None()
-  }
-
-  def unapply(res: (Result, Result)): Option[Unit] = {
-    val (x, y) = res
-    x match 
-      case IntOrArth(()) => y match 
-        case IntOrArth(()) => Some(())
-        case _ => None() 
-      case _ => None() 
-  }
-
-  def unapply(res : Result) : Option[Unit] = {
-    val x = res
-    x match
-      case IntResult(result) => Some(())
-      case ArthErr => Some(())
-      case _ => None()
-  }
 }
 
 object Eval {
@@ -147,7 +96,7 @@ object Eval {
       case UMinus(expr) => eval(expr).op(e)
       case Times(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case FMA(fac1, fac2, s) => eval(fac1).op(eval(fac2), eval(s), e)
-      case Division(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case Division(lhs, rhs) => eval(lhs).op(IntResult(rhs), e)
       case IntPow(base, exp) => eval(base).op(IntResult(exp), e)
       case LessThan(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case GreaterThan(lhs, rhs) => eval(lhs).op(eval(rhs), e)
@@ -176,6 +125,9 @@ object Typing {
         val k = inferredType(lhs)
         if (k == inferredType(rhs) && k == IntegerType) r else Untyped 
       }
+      case Division(lhs, n) => {
+        if (n != 0 && inferredType(lhs) == IntegerType) IntegerType else Untyped
+      }
       case And(lhs, rhs) => {
         val k = inferredType(lhs)
         if (k == inferredType(rhs) && k == BooleanType) k else Untyped 
@@ -202,7 +154,7 @@ object Typing {
       }
       case IntPow(base, exp) => {
         val k = inferredType(base)
-        if (k == IntegerType) k else Untyped 
+        if (k == IntegerType && exp >= 0) k else Untyped 
       }    
   }
 
@@ -265,7 +217,6 @@ object Typing {
       }
       case Division(lhs, rhs) => {
         typeInsurance(lhs)
-        typeInsurance(rhs)
       }
       case IntPow(base, exp) => {
         typeInsurance(base)
@@ -289,7 +240,6 @@ object Typing {
   }.ensuring(eval(e) match
     case BooleanResult(result) => true
     case IntResult(result) => true
-    case ArthErr => true
     case UnitResult => true
     case TypeErr => false
   )
@@ -302,7 +252,6 @@ object IntBinaryExtractor {
       case Plus(lhs, rhs) =>Some(lhs, rhs, IntegerType)
       case Minus(lhs, rhs) => Some(lhs, rhs, IntegerType)
       case Times(lhs, rhs) => Some(lhs, rhs, IntegerType)
-      case Division(lhs, rhs) => Some(lhs, rhs, IntegerType)
 
       // Returns bools
       case Equals(lhs, rhs) => Some(lhs, rhs, BooleanType)
@@ -312,6 +261,7 @@ object IntBinaryExtractor {
       case LessThan(lhs, rhs) => Some(lhs, rhs, BooleanType)
 
       // Not applicable
+      case Division(lhs, rhs) => None()
       case Implies(lhs, rhs) => None()
       case FMA(fac1, fac2, s) => None()
       case IntPow(base, exp) => None()

@@ -121,7 +121,7 @@ object Trees {
         case UMinus(expr) => complexity(expr)
         case lang.Trees.Times(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case FMA(fac1, fac2, s) => complexity(fac1) + complexity(fac2) + complexity(s)
-        case lang.Trees.Division(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case lang.Trees.Division(lhs, rhs) => complexity(lhs)
         case lang.Trees.IntPow(base, exp) => complexity(base)
         case LessThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case GreaterThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
@@ -135,7 +135,7 @@ object Trees {
     def Plus(t: Expr, that: Expr): Expr = Trees.Plus(t, that)
     def Minus(t: Expr, that: Expr): Expr = Trees.Minus(t, that)
     def Times(t: Expr, that: Expr): Expr = Trees.Times(t, that)
-    def Division(t: Expr, that: Expr): Expr = Trees.Division(t, that)
+    def Division(t: Expr, that: BigInt): Expr = Trees.Division(t, that)
     def IntPow(t: Expr, n: BigInt): Expr = {
       require(n > 0)
       Trees.IntPow(t, n)
@@ -291,7 +291,7 @@ object Trees {
   case class FMA(fac1: Expr, fac2: Expr, s: Expr) extends Expr
 
   /** $encodingof `... / ...` */
-  case class Division(lhs: Expr, rhs: Expr) extends Expr 
+  case class Division(lhs: Expr, n: BigInt) extends Expr 
 
 
   case class IntPow(base: Expr, exp: BigInt) extends Expr {

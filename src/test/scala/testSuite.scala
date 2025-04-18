@@ -11,7 +11,6 @@ import stainless.collection.List.*
 import lang.IntResult
 import lang.TypeErr
 import lang.Typing.inferredType
-import lang.ArthErr
 // For more information on writing tests, see
 // https://scalameta.org/munit/docs/getting-started.html
 
@@ -134,11 +133,11 @@ class MySuite extends munit.FunSuite {
   
   test("Counter-example: ((1 / 0) < (3 / 0) || (1 / 0) < (3 / 0))") {
     val counter = Or(
-      LessThan(Division(IntegerLiteral(BigInt(1)), IntegerLiteral(BigInt(0))), Division(IntegerLiteral(BigInt(3)), IntegerLiteral(BigInt(0)))),
-      LessThan(Division(IntegerLiteral(BigInt(1)), IntegerLiteral(BigInt(0))), Division(IntegerLiteral(BigInt(3)), IntegerLiteral(BigInt(0))))
+      LessThan(Division(IntegerLiteral(BigInt(1)), BigInt(0)), Division(IntegerLiteral(BigInt(3)), BigInt(0))),
+      LessThan(Division(IntegerLiteral(BigInt(1)), BigInt(0)), Division(IntegerLiteral(BigInt(3)), BigInt(0)))
     )    
 
-    assertEquals(eval(counter), ArthErr)
-    assertEquals(inferredType(counter), BooleanType)
+    assertEquals(eval(counter), TypeErr)
+    assertEquals(inferredType(counter), Untyped)
   }
 }

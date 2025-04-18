@@ -23,8 +23,8 @@ object Extractors {
         Some(List(t1, t2), (es: List[Expr]) => Times(es(0), es(1)))
       case FMA(t1, t2, t3) =>
         Some(List(t1,t2,t3), (es: List[Expr]) => FMA(es(0), es(1), es(2)))
-      case Division(t1, t2) =>
-        Some(List(t1, t2), (es: List[Expr]) => Division(es(0), es(1)))
+      case Division(t1, n) =>
+        Some(List(t1), (es: List[Expr]) => Division(es(0), n))
 //      case Pow(t1, t2) =>
 //        Some(List(t1, t2), (es: List[Expr]) => Pow(es(0), es(1)))
       case IntPow(t1, n) =>
@@ -55,8 +55,8 @@ object Extractors {
         Some(List(t1, t2), (es: List[Expr]) => Times(es(0), es(1)))
       case FMA(t1, t2, t3) =>
         Some(List(t1,t2,t3), (es: List[Expr]) => FMA(es(0), es(1), es(2)))
-      case Division(t1, t2) =>
-        Some(List(t1, t2), (es: List[Expr]) => Division(es(0), es(1)))
+      case Division(t1, n) =>
+        Some(List(t1), (es: List[Expr]) => Division(es(0), n))
       case IntPow(t1, n) =>
         Some(List(t1), (es: List[Expr]) => IntPow(es(0), n))
 
