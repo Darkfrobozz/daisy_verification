@@ -24,19 +24,9 @@ object Trees {
   // }
 
   /** Represents an expression in Leon. */
-  sealed trait Expr {
-  }
+  sealed trait Expr
 
-  object Expr {
-    def Plus(t: Expr, that: Expr): Expr = Trees.Plus(t, that)
-    def Minus(t: Expr, that: Expr): Expr = Trees.Minus(t, that)
-    def Times(t: Expr, that: Expr): Expr = Trees.Times(t, that)
-    def Division(t: Expr, that: Expr): Expr = Trees.Division(t, that)
-    def IntPow(t: Expr, n: BigInt): Expr = {
-      require(n > 0)
-      Trees.IntPow(t, n)
-    }
-
+  object Helpers {
     // We should try to make this into a flat list that contains all possible Ands.
     /**
           * This should give us a flatmap for all the ands present.
@@ -138,7 +128,18 @@ object Trees {
         case LessEquals(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case GreaterEquals(lhs, rhs) => complexity(lhs) + complexity(rhs)) 
     }.ensuring(res => res > 0)
+    
+  }
 
+  object Expr {
+    def Plus(t: Expr, that: Expr): Expr = Trees.Plus(t, that)
+    def Minus(t: Expr, that: Expr): Expr = Trees.Minus(t, that)
+    def Times(t: Expr, that: Expr): Expr = Trees.Times(t, that)
+    def Division(t: Expr, that: Expr): Expr = Trees.Division(t, that)
+    def IntPow(t: Expr, n: BigInt): Expr = {
+      require(n > 0)
+      Trees.IntPow(t, n)
+    }
     @library
     def getType(expr: Expr) : TypeTree = {
       expr match

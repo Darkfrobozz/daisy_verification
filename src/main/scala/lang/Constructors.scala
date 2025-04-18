@@ -6,6 +6,7 @@ import stainless.collection.*
 import stainless.collection.List.*
 import Trees.*
 import TreeOps.*
+import Trees.Helpers.*
 
 object Constructors {
   /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
@@ -15,7 +16,7 @@ object Constructors {
     // mutable
     val flat : List[Expr] = exprs.flatMap {
       // This flattens and:s
-      case And(lhs, rhs) => Expr.andConverter(And(lhs, rhs))
+      case And(lhs, rhs) => andConverter(And(lhs, rhs))
       case o => List(o)
     }
 
@@ -40,7 +41,7 @@ object Constructors {
 
     if (simpler.length == 0) BooleanLiteral(true)
     else if (simpler.length == 1) simpler.head
-    else Expr.listToAnd(simpler)
+    else listToAnd(simpler)
 
   }
 
@@ -53,7 +54,7 @@ object Constructors {
    */
   def or(exprs: List[Expr]): Expr = {
     val flat = exprs.flatMap {
-      case Or(rhs, lhs) => Expr.orConverter(Or(rhs, lhs))
+      case Or(rhs, lhs) => orConverter(Or(rhs, lhs))
       case o => List(o)
     }
 
@@ -80,7 +81,7 @@ object Constructors {
     simpler match {
       case Nil()  => BooleanLiteral(false)
       case Cons(x, Nil()) => x
-      case _      => Expr.listToOr(simpler)
+      case _      => listToOr(simpler)
     }
   }
 
