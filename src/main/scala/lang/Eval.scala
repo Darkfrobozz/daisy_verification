@@ -4,6 +4,9 @@ import Trees.Helpers.*
 import stainless.annotation.*
 import stainless.lang.*
 import lang.Eval.eval
+import lang.Typing.typeResultEq
+import lang.Typing.inferredType
+import lang.Typing.typeInsurance
 
 case class BooleanResult(val result: Boolean) extends Result
 case class IntResult(val result: BigInt) extends Result
@@ -159,13 +162,43 @@ object Typing {
       }    
   }
 
+  def typeResultEq(t1: Result, t2: TypeTree) : Boolean = {
+    (t1, t2) match
+      case (UnitResult, UnitType) => true
+      case (IntResult(_), IntegerType) => true
+      case (BooleanResult(_), BooleanType) => true
+      case (TypeErr, Untyped) => true
+      case _ => false
+  }
+
+  /**
+      * This is the problem, it is unable to see that and equals is just the eval of its expressions
+      * So, if the evals don't give a typed error.
+      * Actually, it kind of makes sense...
+      * The problem comes from inferredType...
+      *
+      * @param lhs
+      * @param rhs
+      */
+  @library
+  def equalsProof(lhs : Expr, rhs: Expr) = {
+    // Inferred type tells us that none of the subexpressions are untyped
+    require(inferredType(Equals(lhs, rhs)) != Untyped)
+
+    // It also via induction says that the subexpressions do not evaluate to typeErr
+    require(typeResultEq(eval(lhs), inferredType(lhs)))
+    require(typeResultEq(eval(rhs), inferredType(rhs)))
+    // We now need to prove that inferrType ensures that there can be no typeErr.
+    
+  }.ensuring(eval(Equals(lhs, rhs)) != TypeErr)
+
+  // Its able to prove that the type of an expression is equal to the result type
+  // This is awesome!!!
+  // This means that untyped => typeErr
+  // It also means that IntegerType => intResult
+  // Finally it means that BooleanType => BooleanResult (and unitResult => unitType)
+  @library
   def typeInsurance(e : Expr) : Unit = {
-    require(inferredType(e) match
-      case Untyped => false
-      case BooleanType => true
-      case UnitType => true
-      case IntegerType => true
-    )
     decreases(complexity(e))
 
     e match
@@ -238,13 +271,45 @@ object Typing {
         typeInsurance(lhs)
         typeInsurance(rhs)
       }
-  }.ensuring(eval(e) match
-    case BooleanResult(result) => true
-    case IntResult(result) => true
-    case UnitResult => true
-    case TypeErr => false
-  )
+  }.ensuring(typeResultEq(eval(e), inferredType(e)))
+
+  def typeEquality(e : Expr) : Unit = {
+    require(inferredType(e) != Untyped)
+    e match
+      // Very simple getType
+      case IntegerLiteral(value) => ()
+      case BooleanLiteral(value) => ()
+      case LessThan(lhs, rhs) => ()
+      case GreaterThan(lhs, rhs) => ()
+      case LessEquals(lhs, rhs) => ()
+      case GreaterEquals(lhs, rhs) => ()
+      case UnitLiteral() => ()
+      case And(lhs, rhs) => ()
+      case Or(lhs, rhs) => ()
+
+      // One sided getType
+      case Not(expr) => typeEquality(expr)
+      case Plus(lhs, rhs) => typeEquality(lhs)
+      case Minus(lhs, rhs) => typeEquality(lhs)
+      case UMinus(expr) => typeEquality(expr)
+      case Times(lhs, rhs) => typeEquality(lhs)
+      case FMA(fac1, fac2, s) => typeEquality(fac1)
+      case Division(lhs, n) => typeEquality(lhs)
+      case IntPow(base, exp) => typeEquality(base)
+
+      // Slightly more complex getType
+      case Equals(lhs, rhs) => {
+        typeEquality(lhs)
+        typeEquality(rhs)
+      }
+      case Implies(lhs, rhs) => {
+        typeEquality(lhs)
+        typeEquality(rhs)
+      }
+    
+  }.ensuring(inferredType(e) == Expr.getType(e))
 }
+
 
 object IntBinaryExtractor {
   def unapply(e : Expr) : Option[(Expr, Expr, TypeTree)] = {
