@@ -35,6 +35,7 @@ object Trees {
           * @param expr
           * @return
           */
+    @library
     def andConverter(expr: Expr) : List[Expr] = {
       decreases(complexity(expr))
       require(expr match
@@ -58,6 +59,7 @@ object Trees {
       case _ => true
     ))
 
+    @library
     def orConverter(expr: Expr) : List[Expr] = {
       decreases(complexity(expr))
       require(expr match
@@ -140,6 +142,7 @@ object Trees {
       require(n > 0)
       Trees.IntPow(t, n)
     }
+
     @library
     def getType(expr: Expr) : TypeTree = {
       expr match
@@ -166,13 +169,6 @@ object Trees {
     }
   }
 
-
-  /* Stands for an undefined Expr, similar to `???` or `null`
-   *
-   * During code generation, it gets compiled to `null`, or the 0 of the
-   * respective type for value types.
-   */
-
   /** $encodingof an infinite precision integer literal */
   case class IntegerLiteral(value: BigInt) extends Expr
 
@@ -193,43 +189,7 @@ object Trees {
    * you should use [[purescala.Constructors#and purescala's constructor and]]
    * or [[purescala.Constructors#andJoin purescala's constructor andJoin]]
    */
-  case class And(lhs: Expr, rhs: Expr) extends Expr {
-    // require(exprs.size >= 2)
-  }
-
-
-  // object And {
-  //   def apply(a: Expr, b: Expr): Expr = {
-  //     list_size(a, b)
-  //     val k = List(a, b)
-  //     // It can't prove the size of the list...
-  //     assert(k.head == a)
-  //     assert(k.tail.head == b)
-  //     assert(k.size == 2)
-  //     And(k)
-  //   }
-
-  //   def apply(exprs: List[Expr]) = {
-  //     require(exprs.size >= 2)
-  //     new And(exprs)
-  //   }
-
-  //   def make(exprs: List[Expr]): Expr = exprs match {
-  //     case Nil() => BooleanLiteral(true)
-  //     case Cons(e, Nil()) => e
-  //     case Cons(_, Cons(_, _)) => {
-  //       listOfForm(exprs)
-  //       assert(exprs.size >= 2)
-  //       new And(exprs)
-  //     }
-  //   }
-
-  //   def unapply(e: Expr): Option[List[Expr]] = {
-  //     e match
-  //       case t : And => Some(t.exprs)
-  //       case _ => None()
-  //   }
-  // }
+  case class And(lhs: Expr, rhs: Expr) extends Expr
 
   /** $encodingof `... || ...`
    *
@@ -237,26 +197,8 @@ object Trees {
    * you should use [[purescala.Constructors#or purescala's constructor or]] or
    * [[purescala.Constructors#orJoin purescala's constructor orJoin]]
    */
-  case class Or(lhs : Expr, rhs: Expr) extends Expr {
-    // require(exprs.size >= 2)
-  }
+  case class Or(lhs : Expr, rhs: Expr) extends Expr
 
-  // object Or {
-  //   def apply(a: Expr, b: Expr): Expr = {
-  //     list_size(a, b)
-  //     Or(List(a, b))
-  //   }
-  //   def apply(exprs: List[Expr]) = {
-  //     require(exprs.size >= 2)
-  //     new Or(exprs)
-  //   }
-
-  //   def unapply(e: Expr): Option[List[Expr]] = {
-  //     e match
-  //       case t : Or => Some(t.exprs)
-  //       case _ => None() 
-  //   }
-  // }
 
   /** $encodingof `... ==> ...` (logical implication).
    *
@@ -290,27 +232,13 @@ object Trees {
   /** $encodingof `(... * ...) + ...` */
   case class FMA(fac1: Expr, fac2: Expr, s: Expr) extends Expr
 
+
+  // Binaries with ints, this is to control for arthimetic problems
   /** $encodingof `... / ...` */
   case class Division(lhs: Expr, n: BigInt) extends Expr 
 
 
-  case class IntPow(base: Expr, exp: BigInt) extends Expr {
-  }
-
-  // object IntPow {
-  //   def apply(base: Expr, exp: BigInt) = {
-  //     require(exp > 0)
-  //     new IntPow(base, exp)
-  //   }
-
-  //   def unapply(e: Expr): Option[(Expr, BigInt)] = {
-  //     e match
-  //       case t : IntPow => Some(t.base, t.exp) 
-  //       case _ => None()
-  //   }
-
-  // }
-
+  case class IntPow(base: Expr, exp: BigInt) extends Expr
 
   /*  Comparisons */
 

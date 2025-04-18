@@ -115,6 +115,7 @@ object Typing {
       * @param e : This is the expression to find the type on.
       * @return Returns a typetree that is based on all the information
       */
+  @library
   def inferredType(e: Expr): TypeTree = {
     decreases(complexity(e))
     e match
