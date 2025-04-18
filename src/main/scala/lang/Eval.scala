@@ -3,9 +3,11 @@ import Trees._
 import Trees.Helpers.*
 import stainless.annotation.*
 import stainless.lang.*
+import lang.Eval.eval
 
 case class BooleanResult(val result: Boolean) extends Result
 case class IntResult(val result: BigInt) extends Result
+case object UnitResult extends Result
 case object ArthErr extends Result
 case object TypeErr extends Result
 
@@ -67,6 +69,7 @@ sealed trait Result {
         case UMinus(_) => ArthErr
         case _ => TypeErr
       case TypeErr => TypeErr
+      case UnitResult => TypeErr
   }
 
   def op(x: Result, y: Result, e: Expr): Result = {
@@ -133,7 +136,7 @@ object Eval {
     e match
       case IntegerLiteral(value) => IntResult(value)
       case BooleanLiteral(value) => BooleanResult(value)
-      case UnitLiteral() => TypeErr
+      case UnitLiteral() => UnitResult
       case Equals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case And(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case Or(lhs, rhs) => eval(lhs).op(eval(rhs), e)
@@ -169,9 +172,9 @@ object Typing {
       case IntegerLiteral(value) => IntegerType
       case BooleanLiteral(value) => BooleanType
       case UnitLiteral() => UnitType
-      case Equals(lhs, rhs) => {
+      case IntBinaryExtractor(lhs, rhs, r) => {
         val k = inferredType(lhs)
-        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
+        if (k == inferredType(rhs) && k == IntegerType) r else Untyped 
       }
       case And(lhs, rhs) => {
         val k = inferredType(lhs)
@@ -189,50 +192,135 @@ object Typing {
         val k = inferredType(expr)
         if (k == BooleanType) k else Untyped 
       }
-      case Plus(lhs, rhs) => {
-        val k = inferredType(lhs)
-        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
-      }
-      case Minus(lhs, rhs) => {
-        val k = inferredType(lhs)
-        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
-      }
       case UMinus(expr) => {
         val k = inferredType(expr)
         if (k == IntegerType) k else Untyped 
-      }
-      case Times(lhs, rhs) => {
-        val k = inferredType(lhs)
-        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
       }
       case FMA(fac1, fac2, s) => {
         val k = inferredType(fac1)
         if (k == inferredType(fac2) && k == inferredType(s) && k == IntegerType) k else Untyped 
       }
-      case Division(lhs, rhs) => {
-        val k = inferredType(lhs)
-        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
-      }
       case IntPow(base, exp) => {
         val k = inferredType(base)
         if (k == IntegerType) k else Untyped 
+      }    
+  }
+
+  def typeInsurance(e : Expr) : Unit = {
+    require(inferredType(e) match
+      case Untyped => false
+      case BooleanType => true
+      case UnitType => true
+      case IntegerType => true
+    )
+    decreases(complexity(e))
+
+    e match
+      // Obvious base cases
+      case IntegerLiteral(value) => ()
+      case BooleanLiteral(value) => ()
+      case UnitLiteral() => ()
+      // If eval works on each subexpression and remains true
+      // then if current is typed and we know eval gives one of the three.
+      // Then it must also give one of the three for this expression...
+      case Equals(lhs, rhs) => {
+        typeInsurance(lhs)
+        typeInsurance(rhs)
+      }
+      case And(lhs, rhs) => {
+        typeInsurance(lhs)
+        typeInsurance(rhs)
+      }
+
+      case Or(lhs, rhs) => {
+        typeInsurance(lhs)
+        typeInsurance(rhs)        
+      }
+      case Implies(lhs, rhs) => {
+        typeInsurance(lhs)
+        typeInsurance(rhs)
+      }
+      case Not(expr) => {
+        typeInsurance(expr)
+      }
+      case Plus(lhs, rhs) => {        
+        typeInsurance(lhs)
+        typeInsurance(rhs)        
+      }
+      case Minus(lhs, rhs) => {
+        typeInsurance(lhs)
+        typeInsurance(rhs)        
+      }
+      case UMinus(expr) => {
+        typeInsurance(expr)
+      }
+      case Times(lhs, rhs) => {
+        typeInsurance(lhs)
+        typeInsurance(rhs)
+      }
+      case FMA(fac1, fac2, s) => {
+        typeInsurance(fac1)
+        typeInsurance(fac2)
+        typeInsurance(s)
+      }
+      case Division(lhs, rhs) => {
+        typeInsurance(lhs)
+        typeInsurance(rhs)
+      }
+      case IntPow(base, exp) => {
+        typeInsurance(base)
       }
       case LessThan(lhs, rhs) => {
-        val k = inferredType(lhs)
-        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
+        typeInsurance(lhs)
+        typeInsurance(rhs)
       }
       case GreaterThan(lhs, rhs) => {
-        val k = inferredType(lhs)
-        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
+        typeInsurance(lhs)
+        typeInsurance(rhs)
       }
       case LessEquals(lhs, rhs) => {
-        val k = inferredType(lhs)
-        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
+        typeInsurance(lhs)
+        typeInsurance(rhs)
       }
       case GreaterEquals(lhs, rhs) => {
-        val k = inferredType(lhs)
-        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
+        typeInsurance(lhs)
+        typeInsurance(rhs)
       }
-    
+  }.ensuring(eval(e) match
+    case BooleanResult(result) => true
+    case IntResult(result) => true
+    case ArthErr => true
+    case UnitResult => true
+    case TypeErr => false
+  )
+}
+
+object IntBinaryExtractor {
+  def unapply(e : Expr) : Option[(Expr, Expr, TypeTree)] = {
+    e match
+      // Returns ints
+      case Plus(lhs, rhs) =>Some(lhs, rhs, IntegerType)
+      case Minus(lhs, rhs) => Some(lhs, rhs, IntegerType)
+      case Times(lhs, rhs) => Some(lhs, rhs, IntegerType)
+      case Division(lhs, rhs) => Some(lhs, rhs, IntegerType)
+
+      // Returns bools
+      case Equals(lhs, rhs) => Some(lhs, rhs, BooleanType)
+      case GreaterThan(lhs, rhs) => Some(lhs, rhs, BooleanType)
+      case LessEquals(lhs, rhs) => Some(lhs, rhs, BooleanType)
+      case GreaterEquals(lhs, rhs) => Some(lhs, rhs, BooleanType)
+      case LessThan(lhs, rhs) => Some(lhs, rhs, BooleanType)
+
+      // Not applicable
+      case Implies(lhs, rhs) => None()
+      case FMA(fac1, fac2, s) => None()
+      case IntPow(base, exp) => None()
+      case IntegerLiteral(value) => None()
+      case BooleanLiteral(value) => None()
+      case UnitLiteral() => None()
+      case Not(expr) => None()
+      case UMinus(expr) => None()
+      case And(lhs, rhs) => None()
+      case Or(lhs, rhs) => None()
   }
 }

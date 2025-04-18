@@ -4,10 +4,14 @@ import lang.Constructors
 import lang.TreeOps._
 import lang.TreeOps
 import lang.Eval.eval
+import lang.Trees.Helpers.*
 
 import stainless.collection.*
 import stainless.collection.List.*
 import lang.IntResult
+import lang.TypeErr
+import lang.Typing.inferredType
+import lang.ArthErr
 // For more information on writing tests, see
 // https://scalameta.org/munit/docs/getting-started.html
 
@@ -47,7 +51,7 @@ class MySuite extends munit.FunSuite {
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
     val d = BooleanLiteral(false)
-    val res1 = Expr.andConverter(And(a,And(b, And(c, d))))
+    val res1 = andConverter(And(a,And(b, And(c, d))))
     assertEquals(res1, List[Expr](a, b, c, d))
   }
 
@@ -75,7 +79,7 @@ class MySuite extends munit.FunSuite {
     val a = BooleanLiteral(true)
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
-    val d = Expr.listToAnd(List(a, b, c, BooleanLiteral(false)))
+    val d = listToAnd(List(a, b, c, BooleanLiteral(false)))
     val e = BooleanLiteral(false)
     val res1 = Constructors.and(List(a, b, c, d, e))
     assertEquals(res1, BooleanLiteral(false))
@@ -86,7 +90,7 @@ class MySuite extends munit.FunSuite {
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
     val d = BooleanLiteral(false)
-    val res1 = Constructors.and(List(a, b, c, a, Expr.listToAnd(List(a, b, c, d))))
+    val res1 = Constructors.and(List(a, b, c, a, listToAnd(List(a, b, c, d))))
     assertEquals(res1, BooleanLiteral(false))
   }
 
@@ -111,5 +115,30 @@ class MySuite extends munit.FunSuite {
     val a = IntegerLiteral(5)
     val b = IntegerLiteral(4)
     assertEquals(eval(Plus(a, b)), IntResult(BigInt(9)))
+  }
+
+  test("Counter-example: -1 => 1") {
+    val a = IntegerLiteral(-1)
+    val b = IntegerLiteral(1)
+    assertEquals(eval(Implies(a, b)), TypeErr)
+    assertEquals(inferredType(Implies(a,b)), Untyped)
+  }
+// [Warning ]   e: Expr -> Equals(Equals(IntegerLiteral(BigInt("1")), IntegerLiteral(BigInt("0"))), Equals(IntegerLiteral(BigInt("3")), IntegerLiteral(BigInt("5"))))
+  test("Counter-example: ((1 == 0) == (3 == 5))") {
+    val counter = Equals(Equals(IntegerLiteral(BigInt(1)), IntegerLiteral(BigInt(0))), Equals(IntegerLiteral(BigInt(3)), IntegerLiteral(BigInt(5))))    
+
+    assertEquals(eval(counter), TypeErr)
+    assertEquals(inferredType(counter), Untyped)
+  }
+
+  
+  test("Counter-example: ((1 / 0) < (3 / 0) || (1 / 0) < (3 / 0))") {
+    val counter = Or(
+      LessThan(Division(IntegerLiteral(BigInt(1)), IntegerLiteral(BigInt(0))), Division(IntegerLiteral(BigInt(3)), IntegerLiteral(BigInt(0)))),
+      LessThan(Division(IntegerLiteral(BigInt(1)), IntegerLiteral(BigInt(0))), Division(IntegerLiteral(BigInt(3)), IntegerLiteral(BigInt(0))))
+    )    
+
+    assertEquals(eval(counter), ArthErr)
+    assertEquals(inferredType(counter), BooleanType)
   }
 }
