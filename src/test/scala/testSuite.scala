@@ -13,6 +13,7 @@ import stainless.collection.List.*
 import lang.IntResult
 import lang.TypeErr
 import lang.Typing.inferredType
+import lang.BooleanResult
 // For more information on writing tests, see
 // https://scalameta.org/munit/docs/getting-started.html
 
@@ -139,7 +140,13 @@ class MySuite extends munit.FunSuite {
       LessThan(Division(IntegerLiteral(BigInt(1)),IntegerLiteral(BigInt(0))), Division(IntegerLiteral(BigInt(3)), IntegerLiteral(BigInt(0))))
     )    
 
-    assertEquals(eval(counter), BooleanLiteral(None()))
-    assertEquals(inferredType(counter), Untyped)
+    assertEquals(eval(counter), BooleanResult(None()))
+    assertEquals(inferredType(counter), BooleanType)
+  }
+
+  test("Counter-exampl: Unit / Unit: ") {
+    val counter = IntPow(UnitLiteral(), BigInt(3))
+
+    assertEquals(eval(counter), TypeErr)
   }
 }

@@ -85,7 +85,6 @@ object Eval {
       || (res != 0 && base != 0))
     )
 
-  @library
   def eval(e: Expr): Result = {
     decreases(complexity(e))
     e match
@@ -121,7 +120,6 @@ object Typing {
       * @param e : This is the expression to find the type on.
       * @return Returns a typetree that is based on all the information
       */
-  @library
   def inferredType(e: Expr): TypeTree = {
     decreases(complexity(e))
     e match
@@ -201,7 +199,6 @@ object Typing {
   // This means that untyped => typeErr
   // It also means that IntegerType => intResult
   // Finally it means that BooleanType => BooleanResult (and unitResult => unitType)
-  @library
   def typeInsurance(e : Expr) : Unit = {
     decreases(complexity(e))
 
@@ -255,6 +252,7 @@ object Typing {
       }
       case Division(lhs, rhs) => {
         typeInsurance(lhs)
+        typeInsurance(rhs)
       }
       case IntPow(base, exp) => {
         typeInsurance(base)
@@ -277,6 +275,7 @@ object Typing {
       }
   }.ensuring(typeResultEq(eval(e), inferredType(e)))
 
+  @library
   def typeEquality(e : Expr) : Unit = {
     require(inferredType(e) != Untyped)
     e match

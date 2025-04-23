@@ -123,7 +123,7 @@ object Trees {
         case UMinus(expr) => complexity(expr)
         case lang.Trees.Times(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case FMA(fac1, fac2, s) => complexity(fac1) + complexity(fac2) + complexity(s)
-        case lang.Trees.Division(lhs, rhs) => complexity(lhs)
+        case lang.Trees.Division(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case lang.Trees.IntPow(base, exp) => complexity(base)
         case LessThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case GreaterThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
