@@ -33,16 +33,19 @@ sealed trait Result {
         case Times(_, _) => IntResult(a.flatMap(a1 => b.map(b1 => a1 * b1)))
         case Division(_, _) => IntResult(
           b match
-            case Some(v) => if (v == 0) None() else a.flatMap(a1 => b.map(b1 => a1 / b1))
+            case Some(v) => if (v == 0) None() else a.flatMap(a1 => b.map(b1 =>
+              require(b1 != 0)
+              a1 / b1))
             case None() => None()
         )
-        case IntPow(_, _) if b.getOrElse(-1) >= 0 => IntResult(a.flatMap(a1 => b.map(b1 => Eval.pow(a1, b1))))
+        case IntPow(_, _) if b.getOrElse(-1) >= 0 => IntResult(a.flatMap(a1 => b.map(b1 =>
+          require(b1 >= 0)
+          Eval.pow(a1, b1))))
         case Equals(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 == b1)))
         case LessThan(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 < b1)))
         case GreaterThan(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 > b1)))
         case LessEquals(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 <= b1)))
         case GreaterEquals(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 >= b1)))
-        case IntPow(_, _) if b.getOrElse(-1) < 0 => TypeErr
         case _ => TypeErr
 
       case _ => TypeErr
@@ -75,6 +78,7 @@ sealed trait Result {
 object Eval {
 
   // Handle 0 ^ 0 by setting it equal 1
+  @library
   def pow(base: BigInt, exp: BigInt) : BigInt = {
     decreases(exp)
     require(exp >= 0)
@@ -85,6 +89,7 @@ object Eval {
       || (res != 0 && base != 0))
     )
 
+  @library
   def eval(e: Expr): Result = {
     decreases(complexity(e))
     e match
@@ -102,7 +107,20 @@ object Eval {
       case Times(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case FMA(fac1, fac2, s) => eval(fac1).op(eval(fac2), eval(s), e)
       case Division(lhs, rhs) => eval(lhs).op(eval(rhs), e)
-      case IntPow(base, exp) => eval(base).op(IntResult(Some(exp)), e)
+      case IntPow(base, exp) => {
+        eval(base) match
+          case IntResult(result) =>
+            if (exp >= 0) {
+              result match
+                case Some(v) => IntResult(Some(pow(v, exp)))
+                case None() => IntResult(None())
+            } else {
+              TypeErr
+            }
+          case BooleanResult(result) => TypeErr
+          case UnitResult => TypeErr
+          case TypeErr => TypeErr        
+      }
       case LessThan(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case GreaterThan(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case LessEquals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
@@ -120,6 +138,7 @@ object Typing {
       * @param e : This is the expression to find the type on.
       * @return Returns a typetree that is based on all the information
       */
+  @library
   def inferredType(e: Expr): TypeTree = {
     decreases(complexity(e))
     e match
@@ -199,6 +218,7 @@ object Typing {
   // This means that untyped => typeErr
   // It also means that IntegerType => intResult
   // Finally it means that BooleanType => BooleanResult (and unitResult => unitType)
+  @library
   def typeInsurance(e : Expr) : Unit = {
     decreases(complexity(e))
 
@@ -256,6 +276,7 @@ object Typing {
       }
       case IntPow(base, exp) => {
         typeInsurance(base)
+        assert(typeResultEq(eval(e), inferredType(e)))
       }
       case LessThan(lhs, rhs) => {
         typeInsurance(lhs)
