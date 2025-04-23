@@ -219,6 +219,7 @@ object Typing {
   // It also means that IntegerType => intResult
   // Finally it means that BooleanType => BooleanResult (and unitResult => unitType)
   @library
+  @opaque
   def typeInsurance(e : Expr) : Unit = {
     decreases(complexity(e))
 

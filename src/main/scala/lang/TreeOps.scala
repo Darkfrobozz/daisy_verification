@@ -23,22 +23,7 @@ object TreeOps {
     }
   }
 
-  /** Computes the negation of a boolean formula, with some simplifications. */
-  def negate(expr: Expr): Expr = {
-    // require(expr.getType == BooleanType)
-    (expr match {
-      case Not(e) => e
-      case Implies(e1,e2) => and(List(e1, negate(e2)))
-      case Or(lhs, rhs) => and(List(negate(lhs), negate(rhs)))
-      case And(lhs, rhs) => and(List(negate(lhs), negate(rhs)))
-      case LessThan(e1,e2) => GreaterEquals(e1,e2)
-      case LessEquals(e1,e2) => GreaterThan(e1,e2)
-      case GreaterThan(e1,e2) => LessEquals(e1,e2)
-      case GreaterEquals(e1,e2) => LessThan(e1,e2)
-      case BooleanLiteral(b) => BooleanLiteral(!b)
-      case e => Not(e)
-    })
-  }
+
 
   /**
     A term is an expression which (for our purposes) does not contain

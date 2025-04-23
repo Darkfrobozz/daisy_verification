@@ -4,9 +4,11 @@ package lang
 
 import stainless.collection.*
 import stainless.collection.List.*
+import stainless.annotation.*
 import Trees.*
-import TreeOps.*
 import Trees.Helpers.*
+import Eval.*
+import lang.Trees.Expr.getType
 
 object Constructors {
   /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
@@ -94,11 +96,6 @@ object Constructors {
    * @see [[purescala.Expressions.Or Or]]
    */
   def orJoin(es: List[Expr]): Expr = or(es)
-
-  /** $encodingof simplified `!`-expressions .
-   * @see [[purescala.Expressions.Not Not]]
-   */
-  def not(e: Expr): Expr = negate(e)
 
   /** $encodingof simplified `... + ...` (plus).
    * @see [[purescala.Expressions.Plus Plus]]
