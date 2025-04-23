@@ -137,7 +137,7 @@ object Trees {
     def Plus(t: Expr, that: Expr): Expr = Trees.Plus(t, that)
     def Minus(t: Expr, that: Expr): Expr = Trees.Minus(t, that)
     def Times(t: Expr, that: Expr): Expr = Trees.Times(t, that)
-    def Division(t: Expr, that: BigInt): Expr = Trees.Division(t, that)
+    def Division(t: Expr, that: Expr): Expr = Trees.Division(t, that)
     def IntPow(t: Expr, n: BigInt): Expr = {
       require(n > 0)
       Trees.IntPow(t, n)
@@ -235,7 +235,7 @@ object Trees {
 
   // Binaries with ints, this is to control for arthimetic problems
   /** $encodingof `... / ...` */
-  case class Division(lhs: Expr, n: BigInt) extends Expr 
+  case class Division(lhs: Expr, rhs: Expr) extends Expr 
 
 
   case class IntPow(base: Expr, exp: BigInt) extends Expr

@@ -6,6 +6,8 @@ import lang.TreeOps
 import lang.Eval.eval
 import lang.Trees.Helpers.*
 
+import stainless.annotation.*
+import stainless.lang.*
 import stainless.collection.*
 import stainless.collection.List.*
 import lang.IntResult
@@ -27,7 +29,7 @@ class MySuite extends munit.FunSuite {
     e match
       case Minus(lhs, rhs) => Some(rhs)
       case IntegerLiteral(3) => Some(IntegerLiteral(2))
-      case _ => None 
+      case _ => None()
   }
 
 
@@ -42,7 +44,7 @@ class MySuite extends munit.FunSuite {
       case Minus(IntegerLiteral(4), IntegerLiteral(3)) => Some(IntegerLiteral(1))
       case Minus(IntegerLiteral(7), IntegerLiteral(3)) => Some(IntegerLiteral(4))
       case IntegerLiteral(4) => Some(IntegerLiteral(7))
-      case _ => None 
+      case _ => None()
   }
 
   test("Testing andConverter 1") {
@@ -113,7 +115,7 @@ class MySuite extends munit.FunSuite {
   test("Using eval") {
     val a = IntegerLiteral(5)
     val b = IntegerLiteral(4)
-    assertEquals(eval(Plus(a, b)), IntResult(BigInt(9)))
+    assertEquals(eval(Plus(a, b)), IntResult(Some(BigInt(9))))
   }
 
   test("Counter-example: -1 => 1") {
@@ -133,11 +135,11 @@ class MySuite extends munit.FunSuite {
   
   test("Counter-example: ((1 / 0) < (3 / 0) || (1 / 0) < (3 / 0))") {
     val counter = Or(
-      LessThan(Division(IntegerLiteral(BigInt(1)), BigInt(0)), Division(IntegerLiteral(BigInt(3)), BigInt(0))),
-      LessThan(Division(IntegerLiteral(BigInt(1)), BigInt(0)), Division(IntegerLiteral(BigInt(3)), BigInt(0)))
+      LessThan(Division(IntegerLiteral(BigInt(1)), IntegerLiteral(BigInt(0))), Division(IntegerLiteral(BigInt(3)),IntegerLiteral(BigInt(0)))),
+      LessThan(Division(IntegerLiteral(BigInt(1)),IntegerLiteral(BigInt(0))), Division(IntegerLiteral(BigInt(3)), IntegerLiteral(BigInt(0))))
     )    
 
-    assertEquals(eval(counter), TypeErr)
+    assertEquals(eval(counter), BooleanLiteral(None()))
     assertEquals(inferredType(counter), Untyped)
   }
 }

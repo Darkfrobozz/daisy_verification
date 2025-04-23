@@ -8,8 +8,8 @@ import lang.Typing.typeResultEq
 import lang.Typing.inferredType
 import lang.Typing.typeInsurance
 
-case class BooleanResult(val result: Boolean) extends Result
-case class IntResult(val result: BigInt) extends Result
+case class BooleanResult(val result: Option[Boolean]) extends Result
+case class IntResult(val result: Option[BigInt]) extends Result
 case object UnitResult extends Result
 case object TypeErr extends Result
 
@@ -22,24 +22,27 @@ sealed trait Result {
   def op(x: Result, e: Expr) : Result  = {
     (this, x) match
       case (BooleanResult(a), BooleanResult(b)) => e match
-        case Implies(_, _) => BooleanResult(!a || b)
-        case And(_, _) => BooleanResult(a && b)
-        case Or(_, _) => BooleanResult(a && b)
+        case Implies(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => !a1 || b1)))
+        case And(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 && b1)))
+        case Or(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 || b1)))
         case _ => TypeErr
       
       case (IntResult(a), IntResult(b)) => e match 
-        case Plus(_, _) => IntResult(a + b)
-        case Minus(_, _) => IntResult(a - b)
-        case Times(_, _) => IntResult(a * b)
-        case Division(_, _) if b != 0 => IntResult(a / b)
-        case IntPow(_, _) if b >= 0 => IntResult(Eval.pow(a, b))
-        case Equals(_, _) => BooleanResult(a == b)
-        case LessThan(_, _) => BooleanResult(a < b)
-        case GreaterThan(_, _) => BooleanResult(a > b)
-        case LessEquals(_, _) => BooleanResult(a <= b)
-        case GreaterEquals(_, _) => BooleanResult(a >= b)
-        case Division(_, _) if b == 0 => TypeErr
-        case IntPow(_, _) if b < 0 => TypeErr
+        case Plus(_, _) => IntResult(a.flatMap(a1 => b.map(b1 => a1 + b1)))
+        case Minus(_, _) => IntResult(a.flatMap(a1 => b.map(b1 => a1 - b1)))
+        case Times(_, _) => IntResult(a.flatMap(a1 => b.map(b1 => a1 * b1)))
+        case Division(_, _) => IntResult(
+          b match
+            case Some(v) => if (v == 0) None() else a.flatMap(a1 => b.map(b1 => a1 / b1))
+            case None() => None()
+        )
+        case IntPow(_, _) if b.getOrElse(-1) >= 0 => IntResult(a.flatMap(a1 => b.map(b1 => Eval.pow(a1, b1))))
+        case Equals(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 == b1)))
+        case LessThan(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 < b1)))
+        case GreaterThan(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 > b1)))
+        case LessEquals(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 <= b1)))
+        case GreaterEquals(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 >= b1)))
+        case IntPow(_, _) if b.getOrElse(-1) < 0 => TypeErr
         case _ => TypeErr
 
       case _ => TypeErr
@@ -49,10 +52,10 @@ sealed trait Result {
   def op(e: Expr) : Result = {
     this match
       case BooleanResult(a) => e match
-        case Not(_) => BooleanResult(!a)
+        case Not(_) => BooleanResult(a.map(!_))
         case _ => TypeErr 
       case IntResult(a) => e match
-        case UMinus(_) => IntResult(-a) 
+        case UMinus(_) => IntResult(a.map(-_)) 
         case _ => TypeErr
       case TypeErr => TypeErr
       case UnitResult => TypeErr
@@ -61,7 +64,7 @@ sealed trait Result {
   def op(x: Result, y: Result, e: Expr): Result = {
     (this, x, y) match
       case (IntResult(a) , IntResult(b) , IntResult(c)) => e match
-        case FMA(_, _, _) => IntResult(a * b + c)
+        case FMA(_, _, _) => IntResult(a.flatMap(a1 => b.flatMap(b1 => c.map(c1 => a1 * b1 + c1))))
         case _ => TypeErr      
       case _ => TypeErr
       
@@ -86,8 +89,8 @@ object Eval {
   def eval(e: Expr): Result = {
     decreases(complexity(e))
     e match
-      case IntegerLiteral(value) => IntResult(value)
-      case BooleanLiteral(value) => BooleanResult(value)
+      case IntegerLiteral(value) => IntResult(Some(value))
+      case BooleanLiteral(value) => BooleanResult(Some(value))
       case UnitLiteral() => UnitResult
       case Equals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case And(lhs, rhs) => eval(lhs).op(eval(rhs), e)
@@ -99,8 +102,8 @@ object Eval {
       case UMinus(expr) => eval(expr).op(e)
       case Times(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case FMA(fac1, fac2, s) => eval(fac1).op(eval(fac2), eval(s), e)
-      case Division(lhs, rhs) => eval(lhs).op(IntResult(rhs), e)
-      case IntPow(base, exp) => eval(base).op(IntResult(exp), e)
+      case Division(lhs, rhs) => eval(lhs).op(eval(rhs), e)
+      case IntPow(base, exp) => eval(base).op(IntResult(Some(exp)), e)
       case LessThan(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case GreaterThan(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case LessEquals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
@@ -129,8 +132,9 @@ object Typing {
         val k = inferredType(lhs)
         if (k == inferredType(rhs) && k == IntegerType) r else Untyped 
       }
-      case Division(lhs, n) => {
-        if (n != 0 && inferredType(lhs) == IntegerType) IntegerType else Untyped
+      case Division(lhs, rhs) => {
+        val k = inferredType(lhs)
+        if (k == inferredType(rhs) && k == IntegerType) k else Untyped 
       }
       case And(lhs, rhs) => {
         val k = inferredType(lhs)
