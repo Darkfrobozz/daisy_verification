@@ -106,13 +106,11 @@ object Trees {
     }
 
     // This is easily verified
-    // Big problems come from And
+    // Big problems come from And@library
     @library
     def complexity(@induct expr: Expr) : BigInt = {
       BigInt(1) + (expr match
-        case IntegerLiteral(value) => 0
-        case BooleanLiteral(value) => 0
-        case UnitLiteral() => 0
+        case _: Terminal => 0
         case And(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case Or(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case Equals(lhs, rhs) => complexity(lhs) + complexity(rhs)
@@ -149,6 +147,8 @@ object Trees {
         case IntegerLiteral(value) => IntegerType
         case BooleanLiteral(value) => BooleanType
         case UnitLiteral() => UnitType
+        case DivisionError(tpe) => tpe
+        case TypeError() => Untyped
         case LessThan(lhs, rhs) => BooleanType
         case GreaterThan(lhs, rhs) => BooleanType
         case LessEquals(lhs, rhs) => BooleanType
@@ -169,14 +169,21 @@ object Trees {
     }
   }
 
+  sealed trait Terminal extends Expr
   /** $encodingof an infinite precision integer literal */
-  case class IntegerLiteral(value: BigInt) extends Expr
+  case class IntegerLiteral(value: BigInt) extends Terminal
 
   /** $encodingof a boolean literal '''true''' or '''false''' */
-  case class BooleanLiteral(value: Boolean) extends Expr
+  case class BooleanLiteral(value: Boolean) extends Terminal
 
   /** $encodingof the unit literal `()` */
-  case class UnitLiteral() extends Expr
+  case class UnitLiteral() extends Terminal
+
+  // TypeError
+  // DivisionError
+  case class TypeError() extends Terminal
+
+  case class DivisionError(tpe: TypeTree) extends Terminal
 
   /* Propositional logic */
 
