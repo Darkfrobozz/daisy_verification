@@ -147,7 +147,9 @@ object Trees {
         case IntegerLiteral(value) => IntegerType
         case BooleanLiteral(value) => BooleanType
         case UnitLiteral() => UnitType
-        case DivisionError(tpe) => tpe
+        case DivisionError(tpe) => tpe match
+          case UnitType => Untyped
+          case _ => tpe
         case TypeError() => Untyped
         case LessThan(lhs, rhs) => BooleanType
         case GreaterThan(lhs, rhs) => BooleanType

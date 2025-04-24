@@ -96,6 +96,12 @@ object Eval {
       case IntegerLiteral(value) => IntResult(Some(value))
       case BooleanLiteral(value) => BooleanResult(Some(value))
       case UnitLiteral() => UnitResult
+      case DivisionError(tpe) => tpe match
+        case Untyped => TypeErr
+        case BooleanType => BooleanResult(None())
+        case UnitType => TypeErr
+        case IntegerType => IntResult(None())
+      case TypeError() => TypeErr
       case Equals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case And(lhs, rhs) => eval(lhs).op(eval(rhs), e)
       case Or(lhs, rhs) => eval(lhs).op(eval(rhs), e)
@@ -127,6 +133,55 @@ object Eval {
       case GreaterEquals(lhs, rhs) => eval(lhs).op(eval(rhs), e)
     
   }
+
+  @library
+  def equivalentAST(e: Result) : Expr = {
+    e match
+      case BooleanResult(result) => result match
+        case Some(v) => BooleanLiteral(v)
+        case None() => DivisionError(BooleanType)
+      case IntResult(result) => result match
+        case Some(v) => IntegerLiteral(v)
+        case None() => DivisionError(IntegerType)
+      case UnitResult => UnitLiteral()
+      case TypeErr => TypeError()
+  }.ensuring(res => eval(res) == e)
+
+  def evaleq(e : Expr) : Expr = {
+    equivalentAST(eval(e))
+  }
+
+  
+
+  @library
+  def smallstep(e : Expr) : Unit = {
+    
+  }.ensuring(smallstepHelper(e))
+
+  // With this I want to prove that we can eval the sub expressions first.
+  // Super easy for it to verify!
+  @library
+  def smallstepHelper(e: Expr) : Boolean = {
+    e match
+      case _: Terminal => true
+      case Equals(lhs, rhs) => eval(e) == eval(Equals(evaleq(lhs), evaleq(rhs)))
+      case And(lhs, rhs) => eval(e) == eval(And(evaleq(lhs), evaleq(rhs)))
+      case Or(lhs, rhs) => eval(e) == eval(Or(evaleq(lhs), evaleq(rhs)))
+      case Implies(lhs, rhs) => eval(e) == eval(Implies(evaleq(lhs), evaleq(rhs)))
+      case Plus(lhs, rhs) => eval(e) == eval(Plus(evaleq(lhs), evaleq(rhs)))
+      case Minus(lhs, rhs) => eval(e) == eval(Minus(evaleq(lhs), evaleq(rhs)))
+      case Times(lhs, rhs) => eval(e) == eval(Times(evaleq(lhs), evaleq(rhs)))
+      case Division(lhs, rhs) => eval(e) == eval(Division(evaleq(lhs), evaleq(rhs)))
+      case LessThan(lhs, rhs) => eval(e) == eval(LessThan(evaleq(lhs), evaleq(rhs)))
+      case GreaterThan(lhs, rhs) => eval(e) == eval(GreaterThan(evaleq(lhs), evaleq(rhs)))
+      case LessEquals(lhs, rhs) => eval(e) == eval(LessEquals(evaleq(lhs), evaleq(rhs)))
+      case GreaterEquals(lhs, rhs) => eval(e) == eval(GreaterEquals(evaleq(lhs), evaleq(rhs)))
+    
+      case Not(expr) => eval(e) == eval(Not(evaleq(expr)))
+      case UMinus(expr) => eval(e) == eval(UMinus(evaleq(expr)))
+      case FMA(fac1, fac2, s) => eval(e) == eval(FMA(evaleq(fac1), evaleq(fac2), evaleq(s)))
+      case IntPow(base, exp) => eval(e) == eval(IntPow(evaleq(base), exp))
+  }.ensuring(res => true)
 }
 
 object Typing {
@@ -145,6 +200,10 @@ object Typing {
       case IntegerLiteral(value) => IntegerType
       case BooleanLiteral(value) => BooleanType
       case UnitLiteral() => UnitType
+      case DivisionError(tpe) => tpe match
+        case UnitType => Untyped
+        case _ => tpe
+      case TypeError() => Untyped
       case IntBinaryExtractor(lhs, rhs, r) => {
         val k = inferredType(lhs)
         if (k == inferredType(rhs) && k == IntegerType) r else Untyped 
@@ -225,9 +284,7 @@ object Typing {
 
     e match
       // Obvious base cases
-      case IntegerLiteral(value) => ()
-      case BooleanLiteral(value) => ()
-      case UnitLiteral() => ()
+      case _: Terminal => ()
       // If eval works on each subexpression and remains true
       // then if current is typed and we know eval gives one of the three.
       // Then it must also give one of the three for this expression...
@@ -302,13 +359,11 @@ object Typing {
     require(inferredType(e) != Untyped)
     e match
       // Very simple getType
-      case IntegerLiteral(value) => ()
-      case BooleanLiteral(value) => ()
+      case _: Terminal => ()      
       case LessThan(lhs, rhs) => ()
       case GreaterThan(lhs, rhs) => ()
       case LessEquals(lhs, rhs) => ()
       case GreaterEquals(lhs, rhs) => ()
-      case UnitLiteral() => ()
       case And(lhs, rhs) => ()
       case Or(lhs, rhs) => ()
 
@@ -363,5 +418,7 @@ object IntBinaryExtractor {
       case UMinus(expr) => None()
       case And(lhs, rhs) => None()
       case Or(lhs, rhs) => None()
+      case DivisionError(tpe) => None()
+      case TypeError() => None()
   }
 }
