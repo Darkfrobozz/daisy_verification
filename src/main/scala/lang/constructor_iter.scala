@@ -52,15 +52,14 @@ object ConstructIter {
   }
 
   def booleanNegated(b : Boolean) : Unit = {
+    assert(evaleq(Not(BooleanLiteral(b))) == BooleanLiteral(!b))
     
   }.ensuring(isNegation(Not(BooleanLiteral(b)), BooleanLiteral(b)))
 
-  @library
   def divisionEvaluated(b : DivisionError) : Unit = {
     require(b.tpe == BooleanType)
   }.ensuring(eval(Not(b)) == BooleanResult(None()))
 
-  @library
   def divisionNegated(b : DivisionError) : Unit = {
     require(b.tpe == BooleanType)
     divisionEvaluated(b)
@@ -77,7 +76,6 @@ object ConstructIter {
   }.ensuring(isNegation(Not(equivalentAST(e)), equivalentAST(e)))
 
 
-  @library
   def notNegation(e : Not) : Unit = {
     require(inferredType(e) == BooleanType)
     e match
