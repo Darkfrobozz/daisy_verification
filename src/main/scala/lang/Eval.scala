@@ -19,46 +19,120 @@ case object TypeErr extends Result
 // If we have a well-typed expression, but we have division by zero, we get an ArthErr
 // We aim to eventually prove that if it is well-typed, the only error possible is ArthErr.
 sealed trait Result {
+
+  @library
   def op(x: Result, e: Expr) : Result  = {
     (this, x) match
       case (BooleanResult(a), BooleanResult(b)) => e match
-        case Implies(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => !a1 || b1)))
-        case And(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 && b1)))
-        case Or(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 || b1)))
+        case Implies(_, _) => BooleanResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(!a1 || b1) 
+            case None() => None()          
+          case None() => None())
+
+        case And(_, _) => BooleanResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 && b1) 
+            case None() => None()          
+          case None() => None())
+
+        case Or(_, _) => BooleanResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 || b1) 
+            case None() => None()          
+          case None() => None())
+
         case _ => TypeErr
       
       case (IntResult(a), IntResult(b)) => e match 
-        case Plus(_, _) => IntResult(a.flatMap(a1 => b.map(b1 => a1 + b1)))
-        case Minus(_, _) => IntResult(a.flatMap(a1 => b.map(b1 => a1 - b1)))
-        case Times(_, _) => IntResult(a.flatMap(a1 => b.map(b1 => a1 * b1)))
+
+        case Plus(_, _) => IntResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 + b1) 
+            case None() => None()          
+          case None() => None())
+
+        case Minus(_, _) => IntResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 - b1) 
+            case None() => None()          
+          case None() => None())
+
+        case Times(_, _) => IntResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 * b1) 
+            case None() => None()          
+          case None() => None())
+
         case Division(_, _) => IntResult(
-          b match
-            case Some(v) => if (v == 0) None() else a.flatMap(a1 => b.map(b1 =>
-              require(b1 != 0)
-              a1 / b1))
+          a match
+            case Some(a1) => b match
+              case Some(b1) => if (b1 == 0) None() else Some(a1 / b1)
+              case None() => None()
             case None() => None()
         )
-        case IntPow(_, _) if b.getOrElse(-1) >= 0 => IntResult(a.flatMap(a1 => b.map(b1 =>
-          require(b1 >= 0)
-          Eval.pow(a1, b1))))
-        case Equals(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 == b1)))
-        case LessThan(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 < b1)))
-        case GreaterThan(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 > b1)))
-        case LessEquals(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 <= b1)))
-        case GreaterEquals(_, _) => BooleanResult(a.flatMap(a1 => b.map(b1 => a1 >= b1)))
+
+        case IntPow(_, _) if b.getOrElse(-1) >= 0 => IntResult(
+          a match
+            case Some(a1) => b match
+              case Some(b1) => Some(Eval.pow(a1, b1))
+              case None() => None()
+            case None() => None()
+        )
+
+        case Equals(_, _) => BooleanResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 == b1) 
+            case None() => None()          
+          case None() => None())
+
+        case LessThan(_, _) => BooleanResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 < b1) 
+            case None() => None()          
+          case None() => None())
+
+        case GreaterThan(_, _) => BooleanResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 > b1) 
+            case None() => None()          
+          case None() => None())
+        
+
+        case LessEquals(_, _) => BooleanResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 <= b1) 
+            case None() => None()          
+          case None() => None())
+
+        case GreaterEquals(_, _) => BooleanResult(a match
+          case Some(a1) => b match
+            case Some(b1) => Some(a1 >= b1) 
+            case None() => None()          
+          case None() => None())
+
         case _ => TypeErr
 
       case _ => TypeErr
   }
 
 
+  @library
   def op(e: Expr) : Result = {
     this match
       case BooleanResult(a) => e match
-        case Not(_) => BooleanResult(a.map(!_))
+        case Not(_) => BooleanResult(a match
+          case Some(v) => Some(!v)
+          case None() => None()
+        )
         case _ => TypeErr 
+
       case IntResult(a) => e match
-        case UMinus(_) => IntResult(a.map(-_)) 
+        case UMinus(_) => IntResult(a match
+          case Some(v) => Some(-v)
+          case None() => None()
+        )
+         
         case _ => TypeErr
       case TypeErr => TypeErr
       case UnitResult => TypeErr
@@ -67,7 +141,15 @@ sealed trait Result {
   def op(x: Result, y: Result, e: Expr): Result = {
     (this, x, y) match
       case (IntResult(a) , IntResult(b) , IntResult(c)) => e match
-        case FMA(_, _, _) => IntResult(a.flatMap(a1 => b.flatMap(b1 => c.map(c1 => a1 * b1 + c1))))
+        case FMA(_, _, _) => IntResult(
+          a match
+            case Some(a1) => b match
+              case Some(b1) => c match
+                case Some(c1) => Some(a1 * b1 + c1)
+                case None() => None()
+              case None() => None()
+            case None() => None()
+        )
         case _ => TypeErr      
       case _ => TypeErr
       
@@ -182,6 +264,7 @@ object Eval {
       case FMA(fac1, fac2, s) => eval(e) == eval(FMA(evaleq(fac1), evaleq(fac2), evaleq(s)))
       case IntPow(base, exp) => eval(e) == eval(IntPow(evaleq(base), exp))
   }.ensuring(res => true)
+
 }
 
 object Typing {

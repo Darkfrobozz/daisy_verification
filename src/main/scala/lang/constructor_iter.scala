@@ -51,21 +51,42 @@ object ConstructIter {
     negate(e)
   }
 
+
+  @library
+  def easyProofs(b1: BooleanLiteral, b2: BooleanLiteral) : Unit = {
+    assert(eval(And(b1, b2)) == BooleanResult(Some(b1.value && b2.value)))
+    assert(evaleq(Or(b1, b2)) == BooleanLiteral(b1.value || b2.value))
+    assert(evaleq(Implies(b1, b2)) == BooleanLiteral(!b1.value || b2.value))
+  }
+
+  @library
+  def easyProofs2(b1: IntegerLiteral, b2: IntegerLiteral) : Unit = {
+    assert(evaleq(LessThan(b1, b2)) == BooleanLiteral(b1.value < b2.value))
+    assert(evaleq(Equals(b1, b2)) == BooleanLiteral(b1.value == b2.value))
+    assert(evaleq(LessEquals(b1, b2)) == BooleanLiteral(b1.value <= b2.value))
+    assert(evaleq(GreaterThan(b1, b2)) == BooleanLiteral(b1.value > b2.value))
+    assert(evaleq(GreaterEquals(b1, b2)) == BooleanLiteral(b1.value >= b2.value))
+  }
+
+  @library
   def booleanNegated(b : Boolean) : Unit = {
     assert(evaleq(Not(BooleanLiteral(b))) == BooleanLiteral(!b))
     
   }.ensuring(isNegation(Not(BooleanLiteral(b)), BooleanLiteral(b)))
 
+  @library
   def divisionEvaluated(b : DivisionError) : Unit = {
     require(b.tpe == BooleanType)
   }.ensuring(eval(Not(b)) == BooleanResult(None()))
 
+  @library
   def divisionNegated(b : DivisionError) : Unit = {
     require(b.tpe == BooleanType)
     divisionEvaluated(b)
     
   }.ensuring(isNegation(Not(b), b))
 
+  @library
   def resultNegated(e : BooleanResult) = {
     e.result match
       case Some(v) => equivalentAST(e) match
@@ -75,7 +96,7 @@ object ConstructIter {
         case t : DivisionError => divisionNegated(t) 
   }.ensuring(isNegation(Not(equivalentAST(e)), equivalentAST(e)))
 
-
+  @library
   def notNegation(e : Not) : Unit = {
     require(inferredType(e) == BooleanType)
     e match
