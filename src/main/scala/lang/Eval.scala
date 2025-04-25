@@ -264,7 +264,6 @@ object Eval {
       case FMA(fac1, fac2, s) => eval(e) == eval(FMA(evaleq(fac1), evaleq(fac2), evaleq(s)))
       case IntPow(base, exp) => eval(e) == eval(IntPow(evaleq(base), exp))
   }.ensuring(res => true)
-
 }
 
 object Typing {

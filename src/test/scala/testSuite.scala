@@ -149,4 +149,8 @@ class MySuite extends munit.FunSuite {
 
     assertEquals(eval(counter), TypeErr)
   }
+
+  test("Zero division in Scala") {
+    assertEquals(eval(times(IntegerLiteral(0), Division(IntegerLiteral(5), IntegerLiteral(0)))), eval(Times(IntegerLiteral(0), Division(IntegerLiteral(5), IntegerLiteral(0)))))
+  }
 }
