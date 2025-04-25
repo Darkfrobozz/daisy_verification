@@ -13,6 +13,7 @@ import stainless.annotation.*
 import lang.Eval.evaleq
 import lang.Eval.equivalentAST
 import lang.Eval.smallstepHelper
+import javax.swing.UnsupportedLookAndFeelException
 object NegateProof {
   /** Computes the negation of a boolean formula, with some simplifications. */
   @library
@@ -257,6 +258,7 @@ object ArthSimple {
     }
   }
 
+  @library
   def conservationPlusTheorem(lhs: Expr, rhs: Expr) : Unit = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -281,6 +283,7 @@ object ArthSimple {
     }
   }
 
+  @library
   def conservationMinus(lhs: Expr, rhs: Expr): Unit = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -308,6 +311,7 @@ object ArthSimple {
     }
   }
   
+  @ignore
   def conservationTimes(lhs: Expr, rhs: Expr): Unit = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -319,4 +323,89 @@ object ArthSimple {
       case _ => ()
     }
   }.ensuring(eval(times(lhs, rhs)) == eval(Times(lhs, rhs)))
+}
+
+object AndOptimization {
+
+  /**
+      * Ensures the flat trait.
+      * The flat trait is basically that there can be no And:s in the right hand side
+      *
+      * @param e
+      * @return
+      */
+  @library
+  def isAndFlat(e: Expr) : Boolean = {
+    decreases(complexity(e))
+    e match
+      case And(lhs, rhs) => lhs match
+        case And(_, _) => false
+        case _ => isAndFlat(rhs)
+      case _ => true
+  }
+
+  /**
+      * Is needed because we have to flatten a tree
+      *
+      * @param lhs - should be flat
+      * @param rhs - should be flat
+      * @return lhs and then rhs in an And chain
+      */
+  @library
+  def chainTwoFlattened(left : Expr, right: Expr) : Expr = {
+    require(isAndFlat(left))
+    require(isAndFlat(right))
+    decreases(complexity(left))
+    left match
+      // rhs just went away though
+      case And(lleft, rleft) => And(lleft, chainTwoFlattened(rleft, right))
+      case _ => And(left, right)
+  }.ensuring(res => isAndFlat(res))
+  
+  @library
+  def chainConservation(left: Expr, right: Expr) : Unit = {
+    require(isAndFlat(left))
+    require(isAndFlat(right))
+    decreases(complexity(left))
+    left match
+      case And(llhs, rrhs) =>
+        chainConservation(rrhs, right)
+        assert(eval(chainTwoFlattened(rrhs, right)) == eval(And(rrhs, right)))
+        smallstep(And(left, right))
+        assert(eval(And(left, right)) == eval(And(evaleq(left),evaleq(right))))
+        assert(eval(left) == eval(And(evaleq(llhs),evaleq(rrhs))))
+        // This is what I need to prove
+        // And(lhs1, chainTwoFlattened(lhs1, rhs1))
+        // We know that the right hand side equals eval(And(lhs1, rhs1))
+        // This is wrong, eval is not proven because we are doing something else entirely
+      case _ => ()
+    
+  }.ensuring(eval(chainTwoFlattened(left, right)) == eval(And(left, right)))
+  /**
+      * Takes an And expression and turns it into a flat And
+      * According to definition isAndFlat
+      * @param e : Must be And
+      * @return Must be flat
+      */
+  @library
+  def flatten(e: Expr) : Expr = {
+    decreases(complexity(e))
+    e match
+      case And(lhs, rhs) => lhs match
+        case And(lhs1, rhs1) => chainTwoFlattened(flatten(lhs), flatten(rhs))
+        case _ => rhs match
+          case And(lhs1, rhs1) => And(lhs, flatten(rhs))
+          case _ => e
+      case _ => e
+  // Ensuring tells us that it is flat
+  }.ensuring(res => isAndFlat(res))
+
+  @ignore
+  def flattenConservationTheorem(e : Expr) : Unit = {
+    e match
+      case And(lhs, rhs) => ()
+      case _ => ()
+  }.ensuring(eval(flatten(e)) == eval(e))
+
+  
 }
