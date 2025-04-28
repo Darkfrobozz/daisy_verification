@@ -483,10 +483,35 @@ object AndOptimization {
   
   }.ensuring(eval(flatAndTakeWhileTrue(e)) == eval(e))
 
+  @library
+  def truthsOrFalse(e : Expr) : BigInt = {
+    decreases(complexity(e))
+    e match
+      case BooleanLiteral(value) => 1
+      case And(lhs, rhs) => truthsOrFalse(lhs) + truthsOrFalse(rhs)
+      case _ => 0
+  }
+
+  @library
+  def flatATWTOneTrue(e : Expr) : Unit = {
+    require(isAndFlat(e))
+    require(isNotError(e))
+    require(inferredType(e) == BooleanType)
+    e match
+      case And(lhs, rhs) => lhs match
+        case BooleanLiteral(false) => ()
+        case BooleanLiteral(true) =>
+          flatATWTOneTrue(rhs)
+        case _ =>
+          flatATWTOneTrue(rhs)
+      case _ => ()
+  }.ensuring(truthsOrFalse(flatAndTakeWhileTrue(e)) <= 1)
+
   
   /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
    * @see [[lang.Trees.And And]]
    */
+  @library
   def and(e: Expr): Expr = {
     require(inferredType(e) == BooleanType)
     require(isNotError(e))

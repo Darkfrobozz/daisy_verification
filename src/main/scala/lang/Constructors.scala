@@ -9,43 +9,32 @@ import Trees.*
 import Trees.Helpers.*
 import Eval.*
 import lang.Trees.Expr.getType
+import lang.AndOptimization.*
+import lang.Eval.*
+import lang.Typing.*
 
 object Constructors {
   /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
    * @see [[lang.Trees.And And]]
    */
-  def and(exprs: List[Expr]): Expr = {
+  def and(e: Expr): Expr = {
+    require(inferredType(e) == BooleanType)
+    require(isNotError(e))
+
+    flattenConservationTheorem(e)
     // mutable
-    val flat : List[Expr] = exprs.flatMap {
-      // This flattens and:s
-      case And(lhs, rhs) => andConverter(And(lhs, rhs))
-      case o => List(o)
-    }
+    val flat : Expr = flatten(e)
+    assert(eval(flat) == eval(e))
 
+    typeInsurance(flat)
+    // This says that flatAndTakewhile of flat conserves value
+    flatATWTConserve(flat)
     // This code collects all except true literals or takes first false.
+    val simpler = flatAndTakeWhileTrue(flat)
+    assert(eval(simpler) == eval(e))
 
-    // Immutable version
-    val preSimpler:List[Expr] = flat.takeWhile(p => p != BooleanLiteral(false))
-
-    val simpler = if (preSimpler.length == flat.length) {
-      preSimpler
-    } else {
-      preSimpler ++ List(BooleanLiteral(false))
-    }.filter(p => p != BooleanLiteral(true))
-
-    // var stop = false
-    // val simpler:List[Expr] = for(e <- flat if !stop && e != BooleanLiteral(true)) yield {
-    //   if (e == BooleanLiteral(false)) {
-    //     stop = true
-    //   }
-    //   e
-    // }
-
-    if (simpler.length == 0) BooleanLiteral(true)
-    else if (simpler.length == 1) simpler.head
-    else listToAnd(simpler)
-
-  }
+    simpler
+  }.ensuring(res => eval(res) == eval(e))
 
   /** $encodingof `&&`-expressions with arbitrary number of operands as a sequence, and simplified.
    * @see [[purescala.Expressions.And And]]
@@ -90,7 +79,7 @@ object Constructors {
   /** $encodingof `&&`-expressions with arbitrary number of operands as a sequence, and simplified.
    * @see [[purescala.Expressions.And And]]
    */
-  def andJoin(es: List[Expr]): Expr = and(es)
+  def andJoin(es: Expr): Expr = and(es)
 
   /** $encodingof `||`-expressions with arbitrary number of operands as a sequence, and simplified.
    * @see [[purescala.Expressions.Or Or]]
