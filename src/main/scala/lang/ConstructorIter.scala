@@ -136,19 +136,6 @@ object NegateProof {
         case _ => false
   }
 
-  @ignore
-  def notNegated(e : Not) : Unit = {
-    require(inferredType(e) == BooleanType)
-    typeInsurance(e)    
-    // We need to claim that Not(e) is the same as Not(evaleq(e))
-    eval(e) match
-      case BooleanResult(result) => result match
-        case Some(v) =>
-          assert(BooleanResult(Some(!v)) == eval(Not(equivalentAST(BooleanResult(Some(v))))))
-        case None() =>
-          assert(BooleanResult(None()) == eval(Not(equivalentAST(BooleanResult(None())))))
-  }.ensuring(isNegation(negate(e), e))
-
   @library
   def negateGivesNegation(expr : Expr) : Unit = {
     require(inferredType(expr) == BooleanType)
@@ -526,6 +513,205 @@ object AndOptimization {
     flatATWTConserve(flat)
     // This code collects all except true literals or takes first false.
     val simpler = flatAndTakeWhileTrue(flat)
+    assert(eval(simpler) == eval(e))
+
+    simpler
+  }.ensuring(res => eval(res) == eval(e))
+
+}
+
+
+object OrOptimization {
+  import AndOptimization.isNotError
+
+  /**
+      * Ensures the flat trait.
+      * The flat trait is basically that there can be no And:s in the right hand side
+      *
+      * @param e
+      * @return
+      */
+  @library
+  def isOrFlat(e: Expr) : Boolean = {
+    decreases(complexity(e))
+    e match
+      case Or(lhs, rhs) => lhs match
+        case Or(_, _) => false
+        case _ => isOrFlat(rhs)
+      case _ => true
+  }
+
+  /**
+      * Is needed because we have to flatten a tree
+      *
+      * @param lhs - should be flat
+      * @param rhs - should be flat
+      * @return lhs and then rhs in an And chain
+      */
+  @library
+  def chainTwoFlattened(left : Expr, right: Expr) : Expr = {
+    require(isOrFlat(left))
+    require(isOrFlat(right))
+    decreases(complexity(left))
+    left match
+      // rhs just went away though
+      case Or(lleft, rleft) => Or(lleft, chainTwoFlattened(rleft, right))
+      case _ => Or(left, right)
+  }.ensuring(res => isOrFlat(res))
+  
+  @library
+  def chainOrConservation(left: Expr, right: Expr) : Unit = {
+    require(isOrFlat(left))
+    require(isOrFlat(right))
+    decreases(complexity(left))
+    left match
+      case Or(llhs, rrhs) =>
+        chainOrConservation(rrhs, right)
+        assert(eval(chainTwoFlattened(rrhs, right)) == eval(Or(rrhs, right)))
+        smallstep(Or(left, right))
+        assert(eval(Or(left, right)) == eval(Or(evaleq(left),evaleq(right))))
+        assert(eval(left) == eval(Or(evaleq(llhs),evaleq(rrhs))))
+        // This is what I need to prove
+        // Or(lhs1, chainTwoFlattened(lhs1, rhs1))
+        // We know that the right hand side equals eval(Or(lhs1, rhs1))
+        // This is wrong, eval is not proven because we are doing something else entirely
+      case _ => ()
+    
+  }.ensuring(eval(chainTwoFlattened(left, right)) == eval(Or(left, right)))
+  /**
+      * Takes an And expression and turns it into a flat And
+      * According to definition isAndFlat
+      * @param e : Must be And
+      * @return Must be flat
+      */
+  @library
+  def flattenOr(e: Expr) : Expr = {
+    decreases(complexity(e))
+    e match
+      case Or(lhs, rhs) => lhs match
+        case Or(lhs1, rhs1) => chainTwoFlattened(flattenOr(lhs), flattenOr(rhs))
+        case _ => rhs match
+          case Or(lhs1, rhs1) => Or(lhs, flattenOr(rhs))
+          case _ => e
+      case _ => e
+  // Ensuring tells us that it is flat
+  }.ensuring(res => isOrFlat(res))
+
+  @library
+  def flattenConservationTheorem(e : Expr) : Unit = {
+    decreases(complexity(e))
+    e match
+      case Or(lhs, rhs) => lhs match
+        case Or(lhs1, rhs1) =>
+          flattenConservationTheorem(lhs)
+          assert(eval(flattenOr(lhs)) == eval(lhs))
+          flattenConservationTheorem(rhs)
+          assert(eval(flattenOr(rhs)) == eval(rhs))
+          chainOrConservation(flattenOr(lhs), flattenOr(rhs))
+          assert(eval(chainTwoFlattened(flattenOr(lhs), flattenOr(rhs))) == eval(Or(flattenOr(lhs), flattenOr(rhs))))
+        case _ => rhs match
+          case Or(lhs1, rhs1) =>
+            flattenConservationTheorem(rhs)
+          case _ => ()
+      case _ => ()
+  }.ensuring(eval(flattenOr(e)) == eval(e))
+
+  @library
+  def simpleOrSimplify(e : Or) : Expr = {
+    require(inferredType(e) != Untyped)
+    (e.lhs, e.rhs) match
+      case (BooleanLiteral(true), t) => BooleanLiteral(true)
+      case (t, BooleanLiteral(true)) => BooleanLiteral(true)
+      case (BooleanLiteral(false), t) => t
+      case (t, BooleanLiteral(false)) => t
+      case _ => e
+  }
+
+
+  @library
+  def simpleOrConserve(e : Or) : Unit = {
+    require(inferredType(e) == BooleanType)
+    require(isNotError(e))
+  }.ensuring(eval(e) == eval(simpleOrSimplify(e)))
+
+  @library
+  def flatOrTakeWhileTrue(e : Expr) : Expr = {
+    require(isOrFlat(e))
+    e match
+      case Or(lhs, rhs) => lhs match
+        case BooleanLiteral(false) => flatOrTakeWhileTrue(rhs)
+        case BooleanLiteral(true) => lhs
+        case _ => Or(lhs, flatOrTakeWhileTrue(rhs))
+      case _ => e
+  }.ensuring(res => isOrFlat(res))
+
+  /**
+      * This theorem states that flatAndTakeWhileTrue if called on e conserves the value of e
+      * If e is evaluated to a non error and has booleantype
+      *
+      * @param e
+      */
+  @library
+  def flatOTWTConserve(e : Expr) : Unit = {
+    require(isOrFlat(e))
+    require(isNotError(e))
+    require(inferredType(e) == BooleanType)
+    e match
+      case Or(lhs, rhs) => lhs match
+        case BooleanLiteral(false) =>
+          simpleOrConserve(Or(lhs, rhs))
+          flatOTWTConserve(rhs)
+          assert(eval(Or(lhs, rhs)) == eval(rhs))
+        case BooleanLiteral(true) => () 
+        case _ =>
+          flatOTWTConserve(rhs)
+      case _ => ()
+  
+  }.ensuring(eval(flatOrTakeWhileTrue(e)) == eval(e))
+
+  @library
+  def truthsOrFalse(e : Expr) : BigInt = {
+    decreases(complexity(e))
+    e match
+      case BooleanLiteral(value) => 1
+      case Or(lhs, rhs) => truthsOrFalse(lhs) + truthsOrFalse(rhs)
+      case _ => 0
+  }
+
+  @library
+  def flatOTWTOneTrue(e : Expr) : Unit = {
+    require(isOrFlat(e))
+    require(isNotError(e))
+    require(inferredType(e) == BooleanType)
+    e match
+      case Or(lhs, rhs) => lhs match
+        case BooleanLiteral(true) => ()
+        case BooleanLiteral(false) =>
+          flatOTWTOneTrue(rhs)
+        case _ =>
+          flatOTWTOneTrue(rhs)
+      case _ => ()
+  }.ensuring(truthsOrFalse(flatOrTakeWhileTrue(e)) <= 1)
+
+  
+  /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
+   * @see [[lang.Trees.And And]]
+   */
+  @library
+  def or(e: Expr): Expr = {
+    require(inferredType(e) == BooleanType)
+    require(isNotError(e))
+
+    flattenConservationTheorem(e)
+    // mutable
+    val flat : Expr = flattenOr(e)
+    assert(eval(flat) == eval(e))
+
+    typeInsurance(flat)
+    // This says that flatAndTakewhile of flat conserves value
+    flatOTWTConserve(flat)
+    // This code collects all except true literals or takes first false.
+    val simpler = flatOrTakeWhileTrue(flat)
     assert(eval(simpler) == eval(e))
 
     simpler
