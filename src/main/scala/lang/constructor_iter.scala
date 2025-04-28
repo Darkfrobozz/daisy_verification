@@ -13,7 +13,7 @@ import stainless.annotation.*
 import lang.Eval.evaleq
 import lang.Eval.equivalentAST
 import lang.Eval.smallstepHelper
-import javax.swing.UnsupportedLookAndFeelException
+
 object NegateProof {
   /** Computes the negation of a boolean formula, with some simplifications. */
   @library
@@ -400,12 +400,110 @@ object AndOptimization {
   // Ensuring tells us that it is flat
   }.ensuring(res => isAndFlat(res))
 
-  @ignore
+  @library
   def flattenConservationTheorem(e : Expr) : Unit = {
+    decreases(complexity(e))
     e match
-      case And(lhs, rhs) => ()
+      case And(lhs, rhs) => lhs match
+        case And(lhs1, rhs1) =>
+          flattenConservationTheorem(lhs)
+          assert(eval(flatten(lhs)) == eval(lhs))
+          flattenConservationTheorem(rhs)
+          assert(eval(flatten(rhs)) == eval(rhs))
+          chainConservation(flatten(lhs), flatten(rhs))
+          assert(eval(chainTwoFlattened(flatten(lhs), flatten(rhs))) == eval(And(flatten(lhs), flatten(rhs))))
+        case _ => rhs match
+          case And(lhs1, rhs1) =>
+            flattenConservationTheorem(rhs)
+          case _ => ()
       case _ => ()
   }.ensuring(eval(flatten(e)) == eval(e))
 
+  @library
+  def simpleAndSimplify(e : And) : Expr = {
+    require(inferredType(e) != Untyped)
+    (e.lhs, e.rhs) match
+      case (BooleanLiteral(false), t) => BooleanLiteral(false)
+      case (t, BooleanLiteral(false)) => BooleanLiteral(false)
+      case (BooleanLiteral(true), t) => t
+      case (t, BooleanLiteral(true)) => t
+      case _ => e
+  }
+
+  @library
+  def isNotError(e : Expr) : Boolean = {
+    eval(e) match
+      case BooleanResult(result) => result match
+        case Some(v) => true
+        case None() => false
+    
+      case IntResult(result) => result match
+        case Some(v) => true
+        case None() => false
+    
+      case UnitResult => true
+      case TypeErr => false
+  }
+
+  @library
+  def simpleAndConserve(e : And) : Unit = {
+    require(inferredType(e) == BooleanType)
+    require(isNotError(e))
+  }.ensuring(eval(e) == eval(simpleAndSimplify(e)))
+
+  @library
+  def flatAndTakeWhileTrue(e : Expr) : Expr = {
+    require(isAndFlat(e))
+    e match
+      case And(lhs, rhs) => lhs match
+        case BooleanLiteral(false) => lhs
+        case BooleanLiteral(true) => flatAndTakeWhileTrue(rhs)
+        case _ => And(lhs, flatAndTakeWhileTrue(rhs))
+      case _ => e
+  }.ensuring(res => isAndFlat(res))
+
+  /**
+      * This theorem states that flatAndTakeWhileTrue if called on e conserves the value of e
+      * If e is evaluated to a non error and has booleantype
+      *
+      * @param e
+      */
+  @library
+  def flatATWTConserve(e : Expr) : Unit = {
+    require(isAndFlat(e))
+    require(isNotError(e))
+    require(inferredType(e) == BooleanType)
+    e match
+      case And(lhs, rhs) => lhs match
+        case BooleanLiteral(false) =>
+          simpleAndConserve(And(lhs, rhs))
+        case _ =>
+          flatATWTConserve(rhs)
+      case _ => ()
   
+  }.ensuring(eval(flatAndTakeWhileTrue(e)) == eval(e))
+
+  
+  /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
+   * @see [[lang.Trees.And And]]
+   */
+  def and(e: Expr): Expr = {
+    require(inferredType(e) == BooleanType)
+    require(isNotError(e))
+
+    flattenConservationTheorem(e)
+    // mutable
+    val flat : Expr = flatten(e)
+    assert(eval(flat) == eval(e))
+
+    typeInsurance(flat)
+    // This says that flatAndTakewhile of flat conserves value
+    flatATWTConserve(flat)
+    // This code collects all except true literals or takes first false.
+    val simpler = flatAndTakeWhileTrue(flat)
+    assert(eval(simpler) == eval(e))
+
+    simpler
+  }.ensuring(res => eval(res) == eval(e))
+
 }
