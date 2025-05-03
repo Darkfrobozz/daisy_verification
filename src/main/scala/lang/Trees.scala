@@ -106,8 +106,8 @@ object Trees {
     }
 
     // This is easily verified
-    // Big problems come from And@library
-    @library
+    // // Big problems come from And@library
+    // @library
     def complexity(@induct expr: Expr) : BigInt = {
       BigInt(1) + (expr match
         case _: Terminal => 0
@@ -116,13 +116,13 @@ object Trees {
         case Equals(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case Implies(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case Not(expr) => complexity(expr)
-        case lang.Trees.Plus(lhs, rhs) => complexity(lhs) + complexity(rhs)
-        case lang.Trees.Minus(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case Plus(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case Minus(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case UMinus(expr) => complexity(expr)
-        case lang.Trees.Times(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case Times(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case FMA(fac1, fac2, s) => complexity(fac1) + complexity(fac2) + complexity(s)
-        case lang.Trees.Division(lhs, rhs) => complexity(lhs) + complexity(rhs)
-        case lang.Trees.IntPow(base, exp) => complexity(base)
+        case Division(lhs, rhs) => complexity(lhs) + complexity(rhs)
+        case IntPow(base, exp) => complexity(base)
         case LessThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case GreaterThan(lhs, rhs) => complexity(lhs) + complexity(rhs)
         case LessEquals(lhs, rhs) => complexity(lhs) + complexity(rhs)

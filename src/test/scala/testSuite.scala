@@ -1,5 +1,4 @@
 import lang.Trees._
-import lang.Constructors.times
 import lang.Constructors
 import lang.TreeOps._
 import lang.TreeOps
@@ -14,6 +13,8 @@ import lang.IntResult
 import lang.TypeErr
 import lang.Typing.inferredType
 import lang.BooleanResult
+import lang.ArthSimple
+import lang.AndOptimization
 // For more information on writing tests, see
 // https://scalameta.org/munit/docs/getting-started.html
 
@@ -72,7 +73,7 @@ class MySuite extends munit.FunSuite {
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
     val d = BooleanLiteral(false)
-    val res1 = Constructors.and(List(a, b, c, d))
+    val res1 = Constructors.and(And(a, And(b, And(c, d))))
     assertEquals(res1, BooleanLiteral(false))
   }
 
@@ -83,7 +84,7 @@ class MySuite extends munit.FunSuite {
     val c = BooleanLiteral(true)
     val d = listToAnd(List(a, b, c, BooleanLiteral(false)))
     val e = BooleanLiteral(false)
-    val res1 = Constructors.and(List(a, b, c, d, e))
+    val res1 = Constructors.and(And(a, And(b, And(c, And(d, e)))))
     assertEquals(res1, BooleanLiteral(false))
   }
 
@@ -92,7 +93,7 @@ class MySuite extends munit.FunSuite {
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
     val d = BooleanLiteral(false)
-    val res1 = Constructors.and(List(a, b, c, a, listToAnd(List(a, b, c, d))))
+    val res1 = AndOptimization.and(listToAnd(List(a, b, c, a, listToAnd(List(a, b, c, d)))))
     assertEquals(res1, BooleanLiteral(false))
   }
 
@@ -151,6 +152,7 @@ class MySuite extends munit.FunSuite {
   }
 
   test("Zero division in Scala") {
-    assertEquals(eval(times(IntegerLiteral(0), Division(IntegerLiteral(5), IntegerLiteral(0)))), eval(Times(IntegerLiteral(0), Division(IntegerLiteral(5), IntegerLiteral(0)))))
+    assertEquals(eval(Constructors.times(IntegerLiteral(0), Division(IntegerLiteral(5), IntegerLiteral(0)))),
+                 eval(Times(IntegerLiteral(0), Division(IntegerLiteral(5), IntegerLiteral(0)))))
   }
 }

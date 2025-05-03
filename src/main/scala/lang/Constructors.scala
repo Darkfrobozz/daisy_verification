@@ -86,4 +86,52 @@ object Constructors {
    */
   def orJoin(es: List[Expr]): Expr = or(es)
 
+  /** $encodingof simplified `... + ...` (plus).
+   * @see [[purescala.Expressions.Plus Plus]]
+   * @see [[purescala.Expressions.BVPlus BVPlus]]
+   * @see [[purescala.Expressions.RealPlus RealPlus]]
+   */
+  def plus(lhs: Expr, rhs: Expr): Expr = {
+    require(inferredType(lhs) == IntegerType)
+    require(inferredType(rhs) == IntegerType)
+    (lhs, rhs) match {
+      case (IntegerLiteral(bi), _) if bi == 0 => rhs
+      case (_, IntegerLiteral(bi)) if bi == 0 => lhs
+      case _ => Plus(lhs, rhs)
+    }
+  }
+
+  
+  /** $encodingof simplified `... - ...` (minus).
+   * @see [[purescala.Expressions.Minus Minus]]
+   * @see [[purescala.Expressions.BVMinus BVMinus]]
+   * @see [[purescala.Expressions.RealMinus RealMinus]]
+   */
+  def minus(lhs: Expr, rhs: Expr): Expr = {
+    require(inferredType(lhs) == IntegerType)
+    require(inferredType(rhs) == IntegerType)
+    (lhs, rhs) match {
+      case (_, IntegerLiteral(bi)) if bi == 0 => lhs
+      case (IntegerLiteral(bi), _) if bi == 0 => UMinus(rhs)
+      case _ => Minus(lhs, rhs)
+    }
+  }
+
+  
+  /** $encodingof simplified `... * ...` (times).
+   * @see [[purescala.Expressions.Times Times]]
+   * @see [[purescala.Expressions.BVTimes BVTimes]]
+   * @see [[purescala.Expressions.RealTimes RealTimes]]
+   */
+  def times(lhs: Expr, rhs: Expr): Expr = {
+    require(inferredType(lhs) == IntegerType)
+    require(inferredType(rhs) == IntegerType)
+    (lhs, rhs) match {
+      case (IntegerLiteral(bi), _) if bi == 1 => rhs
+      case (_, IntegerLiteral(bi)) if bi == 1 => lhs
+      case (IntegerLiteral(bi), _) if bi == 0 => IntegerLiteral(0)
+      case (_, IntegerLiteral(bi)) if bi == 0 => IntegerLiteral(0)
+      case _ => Times(lhs, rhs)
+    }
+  }
 }
