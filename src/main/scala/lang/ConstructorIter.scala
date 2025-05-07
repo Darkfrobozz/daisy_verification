@@ -136,7 +136,7 @@ object NegateProof {
         case _ => false
   }
 
-  // @library
+  @library
   def negateGivesNegation(expr : Expr) : Unit = {
     require(inferredType(expr) == BooleanType)
     decreases(complexity(expr))
@@ -413,7 +413,6 @@ object AndOptimization {
     require(inferredType(e) != Untyped)
     (e.lhs, e.rhs) match
       case (BooleanLiteral(false), t) => BooleanLiteral(false)
-      case (t, BooleanLiteral(false)) => BooleanLiteral(false)
       case (BooleanLiteral(true), t) => t
       case (t, BooleanLiteral(true)) => t
       case _ => e
@@ -437,7 +436,13 @@ object AndOptimization {
   @library
   def simpleAndConserve(e : And) : Unit = {
     require(inferredType(e) == BooleanType)
-    require(isNotError(e))
+    typeInsurance(e)
+
+    (e.lhs, e.rhs) match
+      case (BooleanLiteral(false), t) => ()
+      case (BooleanLiteral(true), t) => ()
+      case (t, BooleanLiteral(true)) => ()
+      case _ => ()
   }.ensuring(eval(e) == eval(simpleAndSimplify(e)))
 
   @library
@@ -460,16 +465,15 @@ object AndOptimization {
   @library
   def flatATWTConserve(e : Expr) : Unit = {
     require(isAndFlat(e))
-    require(isNotError(e))
     require(inferredType(e) == BooleanType)
     e match
       case And(lhs, rhs) => lhs match
-        case BooleanLiteral(false) =>
+        case BooleanLiteral(false) => simpleAndConserve(And(lhs, rhs))
+        case BooleanLiteral(true) =>
           simpleAndConserve(And(lhs, rhs))
-        case _ =>
           flatATWTConserve(rhs)
+        case _ => flatATWTConserve(rhs)
       case _ => ()
-  
   }.ensuring(eval(flatAndTakeWhileTrue(e)) == eval(e))
 
   @library
@@ -484,7 +488,6 @@ object AndOptimization {
   @library
   def flatATWTOneTrue(e : Expr) : Unit = {
     require(isAndFlat(e))
-    require(isNotError(e))
     require(inferredType(e) == BooleanType)
     e match
       case And(lhs, rhs) => lhs match
@@ -623,7 +626,6 @@ object OrOptimization {
     require(inferredType(e) != Untyped)
     (e.lhs, e.rhs) match
       case (BooleanLiteral(true), t) => BooleanLiteral(true)
-      case (t, BooleanLiteral(true)) => BooleanLiteral(true)
       case (BooleanLiteral(false), t) => t
       case (t, BooleanLiteral(false)) => t
       case _ => e
@@ -633,7 +635,7 @@ object OrOptimization {
   @library
   def simpleOrConserve(e : Or) : Unit = {
     require(inferredType(e) == BooleanType)
-    require(isNotError(e))
+    typeInsurance(e)
   }.ensuring(eval(e) == eval(simpleOrSimplify(e)))
 
   @library
@@ -656,7 +658,6 @@ object OrOptimization {
   @library
   def flatOTWTConserve(e : Expr) : Unit = {
     require(isOrFlat(e))
-    require(isNotError(e))
     require(inferredType(e) == BooleanType)
     e match
       case Or(lhs, rhs) => lhs match
@@ -664,7 +665,8 @@ object OrOptimization {
           simpleOrConserve(Or(lhs, rhs))
           flatOTWTConserve(rhs)
           assert(eval(Or(lhs, rhs)) == eval(rhs))
-        case BooleanLiteral(true) => () 
+        case BooleanLiteral(true) =>
+          simpleOrConserve(Or(lhs, rhs))
         case _ =>
           flatOTWTConserve(rhs)
       case _ => ()
@@ -683,7 +685,6 @@ object OrOptimization {
   @library
   def flatOTWTOneTrue(e : Expr) : Unit = {
     require(isOrFlat(e))
-    require(isNotError(e))
     require(inferredType(e) == BooleanType)
     e match
       case Or(lhs, rhs) => lhs match

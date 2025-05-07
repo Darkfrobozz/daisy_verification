@@ -29,7 +29,7 @@ sealed trait Result {
         case Implies(_, _) => BooleanResult(a match
           case Some(a1) => b match
             case Some(b1) => Some(!a1 || b1) 
-            case None() => None()          
+            case None() => if (a1 == false) Some(!a1) else None()
           case None() => None())
 
         case And(_, _) => BooleanResult(a match
