@@ -107,8 +107,9 @@ object Trees {
 
     // This is easily verified
     // // Big problems come from And@library
-    // @library
-    def complexity(@induct expr: Expr) : BigInt = {
+    @library
+    def complexity(expr: Expr) : BigInt = {
+      decreases(expr)
       BigInt(1) + (expr match
         case _: Terminal => 0
         case And(lhs, rhs) => complexity(lhs) + complexity(rhs)

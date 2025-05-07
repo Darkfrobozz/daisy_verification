@@ -33,13 +33,13 @@ sealed trait Result {
         case And(_, _) => BooleanResult(a match
           case Some(a1) => b match
             case Some(b1) => Some(a1 && b1) 
-            case None() => None()          
+            case None() => if (a1 == false) None() else Some(a1)          
           case None() => None())
 
         case Or(_, _) => BooleanResult(a match
           case Some(a1) => b match
             case Some(b1) => Some(a1 || b1) 
-            case None() => None()          
+            case None() => if (a1 == false) None() else Some(a1)
           case None() => None())
 
         case _ => TypeErr
