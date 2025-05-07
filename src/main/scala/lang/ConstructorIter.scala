@@ -136,7 +136,7 @@ object NegateProof {
         case _ => false
   }
 
-  @library
+  // @library
   def negateGivesNegation(expr : Expr) : Unit = {
     require(inferredType(expr) == BooleanType)
     decreases(complexity(expr))
@@ -190,12 +190,14 @@ object NegateProof {
     typeInsurance(expr.rhs)
     assert(isNegation(evaleq(rhsNeg), evaleq(expr.rhs)))
 
-    smallstep(Or(lhsNeg, rhsNeg))    
-    smallstep(expr)
     val rhs = expr.rhs
     val lhs = expr.lhs
-    assert(eval(expr) == eval(And(evaleq(rhs), evaleq(lhs))))
-    assert(eval(Or(lhsNeg, rhsNeg)) == eval(Or(evaleq(rhsNeg), evaleq(lhsNeg))))
+    smallstep(expr)
+    assert(eval(expr) == eval(And(evaleq(lhs), evaleq(rhs))))
+    smallstep(Or(lhsNeg, rhsNeg))    
+    assert(eval(Or(lhsNeg, rhsNeg)) == eval(Or(evaleq(lhsNeg), evaleq(rhsNeg))))
+
+    assert(isNegation(And(evaleq(lhs), evaleq(rhs)), Or(evaleq(lhsNeg), evaleq(rhsNeg))))
     
   }.ensuring(isNegation(expr, Or(lhsNeg, rhsNeg))) 
 
@@ -219,12 +221,12 @@ object NegateProof {
     typeInsurance(expr.rhs)
     assert(isNegation(evaleq(rhsNeg), evaleq(expr.rhs)))
 
-    smallstep(And(lhsNeg, rhsNeg))    
-    smallstep(expr)
     val rhs = expr.rhs
     val lhs = expr.lhs
-    assert(eval(expr) == eval(Or(evaleq(rhs), evaleq(lhs))))
-    assert(eval(And(lhsNeg, rhsNeg)) == eval(And(evaleq(rhsNeg), evaleq(lhsNeg))))
+    smallstep(And(lhsNeg, rhsNeg))
+    smallstep(expr)
+    assert(eval(expr) == eval(Or(evaleq(lhs), evaleq(rhs))))
+    assert(eval(And(lhsNeg, rhsNeg)) == eval(And(evaleq(lhsNeg), evaleq(rhsNeg))))
     
   }.ensuring(isNegation(expr, And(lhsNeg, rhsNeg))) 
 }

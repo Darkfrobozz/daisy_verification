@@ -7,6 +7,8 @@ import lang.Eval.eval
 import lang.Typing.typeResultEq
 import lang.Typing.inferredType
 import lang.Typing.typeInsurance
+import lang.Eval.smallstepHelper
+import lang.Eval.evaleq
 
 case class BooleanResult(val result: Option[Boolean]) extends Result
 case class IntResult(val result: Option[BigInt]) extends Result
@@ -33,13 +35,13 @@ sealed trait Result {
         case And(_, _) => BooleanResult(a match
           case Some(a1) => b match
             case Some(b1) => Some(a1 && b1) 
-            case None() => if (a1 == false) None() else Some(a1)          
+            case None() => if (a1 == false) Some(a1) else None()          
           case None() => None())
 
         case Or(_, _) => BooleanResult(a match
           case Some(a1) => b match
             case Some(b1) => Some(a1 || b1) 
-            case None() => if (a1 == false) None() else Some(a1)
+            case None() => if (a1 == true) Some(a1) else None()
           case None() => None())
 
         case _ => TypeErr
