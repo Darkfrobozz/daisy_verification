@@ -19,6 +19,10 @@ import lang.AndOptimization
 // https://scalameta.org/munit/docs/getting-started.html
 
 class MyFocusSuite extends munit.FunSuite {
+  test("Zero Division with hand") {
+    // Works as expected!
+    assert(!(false && 5 < (5 / 0)))
+  }
 }
   
 class MySuite extends munit.FunSuite {
