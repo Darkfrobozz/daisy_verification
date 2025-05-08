@@ -16,7 +16,7 @@ import lang.Eval.smallstepHelper
 
 object NegateProof {
   /** Computes the negation of a boolean formula, with some simplifications. */
-  // @library
+  @library
   def negate(expr: Expr): Expr = {
     require(inferredType(expr) == BooleanType)
     decreases(complexity(expr))
@@ -52,14 +52,14 @@ object NegateProof {
   }
 
 
-  // @library
+  @library
   def easyProofs(b1: BooleanLiteral, b2: BooleanLiteral) : Unit = {
     assert(eval(And(b1, b2)) == BooleanResult(Some(b1.value && b2.value)))
     assert(evaleq(Or(b1, b2)) == BooleanLiteral(b1.value || b2.value))
     assert(evaleq(Implies(b1, b2)) == BooleanLiteral(!b1.value || b2.value))
   }
 
-  // @library
+  @library
   def easyProofs2(b1: IntegerLiteral, b2: IntegerLiteral) : Unit = {
     assert(evaleq(LessThan(b1, b2)) == BooleanLiteral(b1.value < b2.value))
     assert(evaleq(Equals(b1, b2)) == BooleanLiteral(b1.value == b2.value))
@@ -68,25 +68,25 @@ object NegateProof {
     assert(evaleq(GreaterEquals(b1, b2)) == BooleanLiteral(b1.value >= b2.value))
   }
 
-  // @library
+  @library
   def booleanNegated(b : Boolean) : Unit = {
     assert(evaleq(Not(BooleanLiteral(b))) == BooleanLiteral(!b))
     
   }.ensuring(isNegation(Not(BooleanLiteral(b)), BooleanLiteral(b)))
 
-  // @library
+  @library
   def divisionEvaluated(b : DivisionError) : Unit = {
     require(b.tpe == BooleanType)
   }.ensuring(eval(Not(b)) == BooleanResult(None()))
 
-  // @library
+  @library
   def divisionNegated(b : DivisionError) : Unit = {
     require(b.tpe == BooleanType)
     divisionEvaluated(b)
     
   }.ensuring(isNegation(Not(b), b))
 
-  // @library
+  @library
   def resultNegated(e : BooleanResult) = {
     e.result match
       case Some(v) => equivalentAST(e) match
@@ -96,7 +96,7 @@ object NegateProof {
         case t : DivisionError => divisionNegated(t) 
   }.ensuring(isNegation(Not(equivalentAST(e)), equivalentAST(e)))
 
-  // @library
+  @library
   def notNegation(e : Not) : Unit = {
     require(inferredType(e) == BooleanType)
     e match
@@ -113,7 +113,7 @@ object NegateProof {
   // Indeed I should probably prove this for each result first and then simply use smallstep
   // to ensure that yes the eval is also not because we can break it up into an evaluation of the expression first
   // and then Not(res), which is proven to be the negation
-  // @library
+  @library
   def doubleNeg(e : Not) : Boolean = {
     require(inferredType(e) == BooleanType)
     typeInsurance(e)
@@ -123,7 +123,7 @@ object NegateProof {
         case None() => BooleanResult(None()) == eval(Not(equivalentAST(BooleanResult(None()))))
   }.ensuring(res => true)
 
-  // @library
+  @library
   def isNegation(e1 : Expr, e2 : Expr) : Boolean = {
     require(inferredType(e1) == BooleanType)
     require(inferredType(e2) == BooleanType)
@@ -136,7 +136,7 @@ object NegateProof {
         case _ => false
   }
 
-  // @library
+  @library
   def negateGivesNegation(expr : Expr) : Unit = {
     require(inferredType(expr) == BooleanType)
     decreases(complexity(expr))
@@ -166,12 +166,12 @@ object NegateProof {
       case Equals(lhs, rhs) => ()
   }.ensuring(isNegation(negate(expr), expr))
 
-  // @library
+  @library
   def depthOneAnd(lhs : BooleanLiteral, rhs: BooleanLiteral) = {
     
   }.ensuring(isNegation(And(lhs, rhs), Or(negate(lhs), negate(rhs))))
 
-  // @library
+  @library
   def andNegation(expr : And, lhsNeg: Expr, rhsNeg: Expr) : Unit = {
     // One or both of the branches could have a division error.
     // They do not need to equal eachother
@@ -202,7 +202,7 @@ object NegateProof {
   }.ensuring(isNegation(expr, Or(lhsNeg, rhsNeg))) 
 
 
-  // @library
+  @library
   def orNegation(expr : Or, lhsNeg: Expr, rhsNeg: Expr) : Unit = {
     // One or both of the branches could have a division error.
     // They do not need to equal eachother
@@ -237,7 +237,7 @@ object ArthSimple {
    * @see [[purescala.Expressions.BVPlus BVPlus]]
    * @see [[purescala.Expressions.RealPlus RealPlus]]
    */
-  // @library
+  @library
   def plus(lhs: Expr, rhs: Expr): Expr = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -248,7 +248,7 @@ object ArthSimple {
     }
   }.ensuring(res => complexity(res) <= complexity(Plus(lhs, rhs)))
 
-  // @library
+  @library
   def conservationPlusTheorem(lhs: Expr, rhs: Expr) : Unit = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -263,7 +263,7 @@ object ArthSimple {
    * @see [[purescala.Expressions.BVMinus BVMinus]]
    * @see [[purescala.Expressions.RealMinus RealMinus]]
    */
-  // @library
+  @library
   def minus(lhs: Expr, rhs: Expr): Expr = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -275,7 +275,7 @@ object ArthSimple {
   }.ensuring(res => complexity(res) <= complexity(Minus(lhs, rhs)))
 
 
-  // @library
+  @library
   def conservationMinus(lhs: Expr, rhs: Expr): Unit = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -292,7 +292,7 @@ object ArthSimple {
    * @see [[purescala.Expressions.BVTimes BVTimes]]
    * @see [[purescala.Expressions.RealTimes RealTimes]]
    */
-  // @library
+  @library
   def times(lhs: Expr, rhs: Expr): Expr = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -328,7 +328,7 @@ object AndOptimization {
       * @param e
       * @return
       */
-  // @library
+  @library
   def isAndFlat(e: Expr) : Boolean = {
     decreases(complexity(e))
     e match
@@ -345,7 +345,7 @@ object AndOptimization {
       * @param rhs - should be flat
       * @return lhs and then rhs in an And chain
       */
-  // @library
+  @library
   def chainTwoFlattened(left : Expr, right: Expr) : Expr = {
     require(isAndFlat(left))
     require(isAndFlat(right))
@@ -356,7 +356,7 @@ object AndOptimization {
       case _ => And(left, right)
   }.ensuring(res => isAndFlat(res))
 
-  // @library
+  @library
   def chainTwoFlattenedComplex(left: Expr, right: Expr) : Unit = {
     require(isAndFlat(left))
     require(isAndFlat(right))
@@ -368,7 +368,7 @@ object AndOptimization {
       case _ => ()
   }.ensuring(complexity(chainTwoFlattened(left, right)) == complexity(And(left, right)))
   
-  // @library
+  @library
   def chainConservation(left: Expr, right: Expr) : Unit = {
     require(isAndFlat(left))
     require(isAndFlat(right))
@@ -394,7 +394,7 @@ object AndOptimization {
       * @param e : Must be And
       * @return Must be flat
       */
-  // @library
+  @library
   def flatten(e: Expr) : Expr = {
     decreases(complexity(e))
     e match
@@ -407,7 +407,7 @@ object AndOptimization {
   // Ensuring tells us that it is flat
   }.ensuring(res => isAndFlat(res))
 
-  // @library
+  @library
   def flattenConservationTheorem(e : Expr) : Unit = {
     decreases(complexity(e))
     e match
@@ -426,7 +426,7 @@ object AndOptimization {
       case _ => ()
   }.ensuring(eval(flatten(e)) == eval(e))
 
-  // @library
+  @library
   def flattenComplexityPreserve(e: Expr) : Unit = {
     decreases(complexity(e))
     e match
@@ -446,7 +446,7 @@ object AndOptimization {
   }.ensuring(complexity(flatten(e)) <= complexity(e))
   
 
-  // @library
+  @library
   def simpleAndSimplify(e : And) : Expr = {
     require(inferredType(e) != Untyped)
     (e.lhs, e.rhs) match
@@ -456,7 +456,7 @@ object AndOptimization {
       case _ => e
   }.ensuring(res => complexity(e) <= complexity(e))
 
-  // @library
+  @library
   def simpleAndConserve(e : And) : Unit = {
     require(inferredType(e) == BooleanType)
     typeInsurance(e)
@@ -469,7 +469,7 @@ object AndOptimization {
   }.ensuring(eval(e) == eval(simpleAndSimplify(e)))
 
 
-  // @library
+  @library
   def flatAndTakeWhileTrue(e : Expr) : Expr = {
     require(isAndFlat(e))
     e match
@@ -486,7 +486,7 @@ object AndOptimization {
       *
       * @param e
       */
-  // @library
+  @library
   def flatATWTConserve(e : Expr) : Unit = {
     require(isAndFlat(e))
     require(inferredType(e) == BooleanType)
@@ -500,7 +500,7 @@ object AndOptimization {
       case _ => ()
   }.ensuring(eval(flatAndTakeWhileTrue(e)) == eval(e))
 
-  // @library
+  @library
   def flatATWTSizeConserve(e : Expr) : Unit = {
     require(isAndFlat(e))
     require(inferredType(e) == BooleanType)
@@ -512,7 +512,7 @@ object AndOptimization {
       case _ => ()
   }.ensuring(complexity(flatAndTakeWhileTrue(e)) <= complexity(e))
 
-  // @library
+  @library
   def truthsOrFalse(e : Expr) : BigInt = {
     decreases(complexity(e))
     e match
@@ -521,7 +521,7 @@ object AndOptimization {
       case _ => 0
   }
 
-  // @library
+  @library
   def flatATWTOneTrue(e : Expr) : Unit = {
     require(isAndFlat(e))
     require(inferredType(e) == BooleanType)
@@ -539,7 +539,7 @@ object AndOptimization {
   /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
    * @see [[lang.Trees.And And]]
    */
-  // @library
+  @library
   def and(e: Expr): Expr = {
     require(inferredType(e) == BooleanType)
 
@@ -573,7 +573,7 @@ object OrOptimization {
       * @param e
       * @return
       */
-  // @library
+  @library
   def isOrFlat(e: Expr) : Boolean = {
     decreases(complexity(e))
     e match
@@ -590,7 +590,7 @@ object OrOptimization {
       * @param rhs - should be flat
       * @return lhs and then rhs in an And chain
       */
-  // @library
+  @library
   def chainTwoFlattened(left : Expr, right: Expr) : Expr = {
     require(isOrFlat(left))
     require(isOrFlat(right))
@@ -601,7 +601,7 @@ object OrOptimization {
       case _ => Or(left, right)
   }.ensuring(res => isOrFlat(res))
   
-  // @library
+  @library
   def chainOrConservation(left: Expr, right: Expr) : Unit = {
     require(isOrFlat(left))
     require(isOrFlat(right))
@@ -621,7 +621,7 @@ object OrOptimization {
     
   }.ensuring(eval(chainTwoFlattened(left, right)) == eval(Or(left, right)))
 
-  // @library
+  @library
   def chainTwoFlattenedComplex(left: Expr, right: Expr) : Unit = {
     require(isOrFlat(left))
     require(isOrFlat(right))
@@ -639,7 +639,7 @@ object OrOptimization {
       * @param e : Must be And
       * @return Must be flat
       */
-  // @library
+  @library
   def flattenOr(e: Expr) : Expr = {
     decreases(complexity(e))
     e match
@@ -652,7 +652,7 @@ object OrOptimization {
   // Ensuring tells us that it is flat
   }.ensuring(res => isOrFlat(res))
 
-  // @library
+  @library
   def flattenConservationTheorem(e : Expr) : Unit = {
     decreases(complexity(e))
     e match
@@ -671,7 +671,7 @@ object OrOptimization {
       case _ => ()
   }.ensuring(eval(flattenOr(e)) == eval(e))
 
-  // @library
+  @library
   def flattenComplexityPreserve(e: Expr) : Unit = {
     decreases(complexity(e))
     e match
@@ -691,7 +691,7 @@ object OrOptimization {
   }.ensuring(complexity(flattenOr(e)) <= complexity(e))
 
 
-  // @library
+  @library
   def simpleOrSimplify(e : Or) : Expr = {
     require(inferredType(e) != Untyped)
     (e.lhs, e.rhs) match
@@ -702,13 +702,13 @@ object OrOptimization {
   }.ensuring(res => complexity(res) <= complexity(e))
 
 
-  // @library
+  @library
   def simpleOrConserve(e : Or) : Unit = {
     require(inferredType(e) == BooleanType)
     typeInsurance(e)
   }.ensuring(eval(e) == eval(simpleOrSimplify(e)))
 
-  // @library
+  @library
   def flatOrTakeWhileTrue(e : Expr) : Expr = {
     require(isOrFlat(e))
     e match
@@ -725,7 +725,7 @@ object OrOptimization {
       *
       * @param e
       */
-  // @library
+  @library
   def flatOTWTConserve(e : Expr) : Unit = {
     require(isOrFlat(e))
     require(inferredType(e) == BooleanType)
@@ -743,7 +743,7 @@ object OrOptimization {
   
   }.ensuring(eval(flatOrTakeWhileTrue(e)) == eval(e))
 
-  // @library
+  @library
   def flatOTWTConserveSize(e : Expr) : Unit = {
     require(isOrFlat(e))
     require(inferredType(e) == BooleanType)
@@ -757,7 +757,7 @@ object OrOptimization {
       case _ => ()
   }.ensuring(complexity(flatOrTakeWhileTrue(e)) <= complexity(e))
 
-  // @library
+  @library
   def truthsOrFalse(e : Expr) : BigInt = {
     decreases(complexity(e))
     e match
@@ -766,7 +766,7 @@ object OrOptimization {
       case _ => 0
   }
 
-  // @library
+  @library
   def flatOTWTOneTrue(e : Expr) : Unit = {
     require(isOrFlat(e))
     require(inferredType(e) == BooleanType)
@@ -784,7 +784,7 @@ object OrOptimization {
   /** $encodingof `&&`-expressions with arbitrary number of operands, and simplified.
    * @see [[lang.Trees.And And]]
    */
-  // @library
+  @library
   def or(e: Expr): Expr = {
     require(inferredType(e) == BooleanType)
 
