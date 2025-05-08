@@ -54,7 +54,7 @@ class evalSuite extends munit.FunSuite {
       )
     )
     
-    assertEquals(eval(k), BooleanResult(Some(false)))
+    assertEquals(eval(k), BooleanResult(Some(false && 5 / 0)))
   }
 
   
