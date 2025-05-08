@@ -355,6 +355,18 @@ object AndOptimization {
       case And(lleft, rleft) => And(lleft, chainTwoFlattened(rleft, right))
       case _ => And(left, right)
   }.ensuring(res => isAndFlat(res))
+
+  @library
+  def chainTwoFlattenedComplex(left: Expr, right: Expr) : Unit = {
+    require(isAndFlat(left))
+    require(isAndFlat(right))
+    decreases(complexity(left))
+    left match
+      // rhs just went away though
+      case And(lleft, rleft) =>
+        chainTwoFlattenedComplex(rleft, right)
+      case _ => ()
+  }.ensuring(complexity(chainTwoFlattened(left, right)) == complexity(And(left, right)))
   
   @library
   def chainConservation(left: Expr, right: Expr) : Unit = {
@@ -375,6 +387,7 @@ object AndOptimization {
       case _ => ()
     
   }.ensuring(eval(chainTwoFlattened(left, right)) == eval(And(left, right)))
+
   /**
       * Takes an And expression and turns it into a flat And
       * According to definition isAndFlat
@@ -414,6 +427,26 @@ object AndOptimization {
   }.ensuring(eval(flatten(e)) == eval(e))
 
   @library
+  def flattenComplexityPreserve(e: Expr) : Unit = {
+    decreases(complexity(e))
+    e match
+      case And(lhs, rhs) => lhs match
+        case And(lhs1, rhs1) =>
+          // chainTwoFlattened(flatten(lhs), flatten(rhs))
+          flattenComplexityPreserve(lhs)
+          flattenComplexityPreserve(rhs)
+          chainTwoFlattenedComplex(flatten(lhs), flatten(rhs))
+        case _ => rhs match
+          case And(lhs1, rhs1) =>
+            flattenComplexityPreserve(rhs)
+            // And(lhs, flatten(rhs))
+          case _ => ()
+      case _ => ()
+  // Ensuring tells us that it is flat
+  }.ensuring(complexity(flatten(e)) <= complexity(e))
+  
+
+  @library
   def simpleAndSimplify(e : And) : Expr = {
     require(inferredType(e) != Untyped)
     (e.lhs, e.rhs) match
@@ -421,22 +454,7 @@ object AndOptimization {
       case (BooleanLiteral(true), t) => t
       case (t, BooleanLiteral(true)) => t
       case _ => e
-  }
-
-  @library
-  def isNotError(e : Expr) : Boolean = {
-    eval(e) match
-      case BooleanResult(result) => result match
-        case Some(v) => true
-        case None() => false
-    
-      case IntResult(result) => result match
-        case Some(v) => true
-        case None() => false
-    
-      case UnitResult => true
-      case TypeErr => false
-  }
+  }.ensuring(res => complexity(e) <= complexity(e))
 
   @library
   def simpleAndConserve(e : And) : Unit = {
@@ -449,6 +467,7 @@ object AndOptimization {
       case (t, BooleanLiteral(true)) => ()
       case _ => ()
   }.ensuring(eval(e) == eval(simpleAndSimplify(e)))
+
 
   @library
   def flatAndTakeWhileTrue(e : Expr) : Expr = {
@@ -482,6 +501,18 @@ object AndOptimization {
   }.ensuring(eval(flatAndTakeWhileTrue(e)) == eval(e))
 
   @library
+  def flatATWTSizeConserve(e : Expr) : Unit = {
+    require(isAndFlat(e))
+    require(inferredType(e) == BooleanType)
+    e match
+      case And(lhs, rhs) => lhs match
+        case BooleanLiteral(false) => ()
+        case BooleanLiteral(true) => flatATWTSizeConserve(rhs)
+        case _ => flatATWTSizeConserve(rhs)
+      case _ => ()
+  }.ensuring(complexity(flatAndTakeWhileTrue(e)) <= complexity(e))
+
+  @library
   def truthsOrFalse(e : Expr) : BigInt = {
     decreases(complexity(e))
     e match
@@ -511,28 +542,29 @@ object AndOptimization {
   @library
   def and(e: Expr): Expr = {
     require(inferredType(e) == BooleanType)
-    require(isNotError(e))
 
     flattenConservationTheorem(e)
+    flattenComplexityPreserve(e)
     // mutable
     val flat : Expr = flatten(e)
     assert(eval(flat) == eval(e))
 
+    typeInsurance(e)
     typeInsurance(flat)
     // This says that flatAndTakewhile of flat conserves value
     flatATWTConserve(flat)
+    flatATWTSizeConserve(flat)
     // This code collects all except true literals or takes first false.
     val simpler = flatAndTakeWhileTrue(flat)
     assert(eval(simpler) == eval(e))
 
     simpler
-  }.ensuring(res => eval(res) == eval(e))
+  }.ensuring(res => eval(res) == eval(e) && complexity(res) <= complexity(e))
 
 }
 
 
 object OrOptimization {
-  import AndOptimization.isNotError
 
   /**
       * Ensures the flat trait.
@@ -708,7 +740,6 @@ object OrOptimization {
   @library
   def or(e: Expr): Expr = {
     require(inferredType(e) == BooleanType)
-    require(isNotError(e))
 
     flattenConservationTheorem(e)
     // mutable
