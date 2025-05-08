@@ -237,6 +237,7 @@ object ArthSimple {
    * @see [[purescala.Expressions.BVPlus BVPlus]]
    * @see [[purescala.Expressions.RealPlus RealPlus]]
    */
+  @library
   def plus(lhs: Expr, rhs: Expr): Expr = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -245,7 +246,7 @@ object ArthSimple {
       case (_, IntegerLiteral(bi)) if bi == 0 => lhs
       case _ => Plus(lhs, rhs)
     }
-  }
+  }.ensuring(res => complexity(res) <= complexity(Plus(lhs, rhs)))
 
   @library
   def conservationPlusTheorem(lhs: Expr, rhs: Expr) : Unit = {
@@ -262,6 +263,7 @@ object ArthSimple {
    * @see [[purescala.Expressions.BVMinus BVMinus]]
    * @see [[purescala.Expressions.RealMinus RealMinus]]
    */
+  @library
   def minus(lhs: Expr, rhs: Expr): Expr = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -270,7 +272,8 @@ object ArthSimple {
       case (IntegerLiteral(bi), _) if bi == 0 => UMinus(rhs)
       case _ => Minus(lhs, rhs)
     }
-  }
+  }.ensuring(res => complexity(res) <= complexity(Minus(lhs, rhs)))
+
 
   @library
   def conservationMinus(lhs: Expr, rhs: Expr): Unit = {
@@ -283,11 +286,13 @@ object ArthSimple {
     }
   }.ensuring(eval(minus(lhs, rhs)) == eval(Minus(lhs, rhs)))
 
+
   /** $encodingof simplified `... * ...` (times).
    * @see [[purescala.Expressions.Times Times]]
    * @see [[purescala.Expressions.BVTimes BVTimes]]
    * @see [[purescala.Expressions.RealTimes RealTimes]]
    */
+  @library
   def times(lhs: Expr, rhs: Expr): Expr = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -298,7 +303,7 @@ object ArthSimple {
       case (_, IntegerLiteral(bi)) if bi == 0 => IntegerLiteral(0)
       case _ => Times(lhs, rhs)
     }
-  }
+  }.ensuring(res => complexity(res) <= complexity(Times(lhs, rhs)))
   
   @ignore
   def conservationTimes(lhs: Expr, rhs: Expr): Unit = {
