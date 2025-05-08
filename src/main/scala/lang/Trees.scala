@@ -8,7 +8,6 @@ import stainless.collection.List.*
 import stainless.collection.ListOps
 import stainless.annotation.*
 import stainless.lang.*
-import ListsTheorems._
 
 // These should be removed
 object Trees {
@@ -27,84 +26,6 @@ object Trees {
   sealed trait Expr
 
   object Helpers {
-    // We should try to make this into a flat list that contains all possible Ands.
-    /**
-          * This should give us a flatmap for all the ands present.
-          * This can be applied for each loop.
-          *
-          * @param expr
-          * @return
-          */
-    @library
-    def andConverter(expr: Expr) : List[Expr] = {
-      decreases(complexity(expr))
-      require(expr match
-        case And(lhs, rhs) => true
-        case _ => false
-      )
-      expr match {
-        case And(lhs, rhs) => (lhs, rhs) match
-          case (And(_, _), And(_, _)) => 
-            addedLists(andConverter(lhs), andConverter(rhs), p => p match {
-              case And(_, _) => false
-              case _ => true
-            })
-            andConverter(lhs) ++ andConverter(rhs)
-          case (And(_, _), _) => Cons(rhs, andConverter(lhs))
-          case (_, And(_, _)) => Cons(lhs, andConverter(rhs))
-          case _ => Cons(lhs, Cons(rhs, Nil()))
-      }
-    }.ensuring(res => res.forall(p => p match
-      case And(_, _) => false
-      case _ => true
-    ))
-
-    @library
-    def orConverter(expr: Expr) : List[Expr] = {
-      decreases(complexity(expr))
-      require(expr match
-        case Or(lhs, rhs) => true
-        case _ => false
-      )
-      expr match {
-        case Or(lhs, rhs) => (lhs, rhs) match
-          case (Or(_, _), Or(_, _)) => 
-            addedLists(orConverter(lhs), orConverter(rhs), p => p match {
-              case Or(_, _) => false
-              case _ => true
-            })
-            orConverter(lhs) ++ orConverter(rhs)
-          case (Or(_, _), _) => Cons(rhs, orConverter(lhs))
-          case (_, Or(_, _)) => Cons(lhs, orConverter(rhs))
-          case _ => Cons(lhs, Cons(rhs, Nil()))
-      }
-    }.ensuring(res => res.forall(p => p match
-      case Or(_, _) => false
-      case _ => true
-    ))
-
-    @library
-    def listToAnd(l: List[Expr]) : Expr = {
-      require(l.size >= 2)
-      decreases(l.size)
-      l match
-        case Cons(h, t) => t match
-          case Cons(h2, t2) => t2 match
-            case Cons(h3, t3) => And(h, listToAnd(t))
-            case Nil() => And(h, h2) 
-    }
-
-    @library
-    def listToOr(l: List[Expr]) : Expr = {
-      require(l.size >= 2)
-      decreases(l.size)
-      l match
-        case Cons(h, t) => t match
-          case Cons(h2, t2) => t2 match
-            case Cons(h3, t3) => Or(h, listToAnd(t))
-            case Nil() => Or(h, h2) 
-    }
-
     // This is easily verified
     // // Big problems come from And@library
     @library

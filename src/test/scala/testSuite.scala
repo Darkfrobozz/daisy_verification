@@ -54,7 +54,7 @@ class evalSuite extends munit.FunSuite {
       )
     )
     
-    assertEquals(eval(k), BooleanResult(Some(false && 5 / 0)))
+    assertEquals(eval(k), BooleanResult(Some(false && 5 < 5 / 0)))
   }
 
   
@@ -139,15 +139,6 @@ class MySuite extends munit.FunSuite {
       case _ => None()
   }
 
-  test("Testing andConverter 1") {
-    val a = BooleanLiteral(true)
-    val b = BooleanLiteral(true)
-    val c = BooleanLiteral(true)
-    val d = BooleanLiteral(false)
-    val res1 = andConverter(And(a,And(b, And(c, d))))
-    assertEquals(res1, List[Expr](a, b, c, d))
-  }
-
   // test("Testing  PostMap example") {
   //   val a = IntegerLiteral(5)
   //   val b = IntegerLiteral(4)
@@ -172,7 +163,7 @@ class MySuite extends munit.FunSuite {
     val a = BooleanLiteral(true)
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
-    val d = listToAnd(List(a, b, c, BooleanLiteral(false)))
+    val d = And(a, And(b, And(c, BooleanLiteral(false))))
     val e = BooleanLiteral(false)
     val res1 = Constructors.and(And(a, And(b, And(c, And(d, e)))))
     assertEquals(res1, BooleanLiteral(false))
@@ -183,7 +174,7 @@ class MySuite extends munit.FunSuite {
     val b = BooleanLiteral(true)
     val c = BooleanLiteral(true)
     val d = BooleanLiteral(false)
-    val res1 = AndOptimization.and(listToAnd(List(a, b, c, a, listToAnd(List(a, b, c, d)))))
+    val res1 = Constructors.and(And(a, And(b, And(c, And(d, And(a, And(b, And(c, d))))))))
     assertEquals(res1, BooleanLiteral(false))
   }
 
@@ -192,7 +183,7 @@ class MySuite extends munit.FunSuite {
     val b = BooleanLiteral(false)
     val c = BooleanLiteral(true)
     val d = BooleanLiteral(false)
-    val res1 = Constructors.or(List(a, b, c, d))
+    val res1 = Constructors.or(Or(a, Or(b, Or(c, d))))
     assertEquals(res1, BooleanLiteral(true))
   }
 
