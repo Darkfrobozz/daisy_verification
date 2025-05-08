@@ -24,6 +24,92 @@ class MyFocusSuite extends munit.FunSuite {
     assert(!(false && 5 < (5 / 0)))
   }
 }
+
+class evalSuite extends munit.FunSuite {
+  test("Plus") {
+    assertEquals(eval(Plus(IntegerLiteral(5), IntegerLiteral(5))), IntResult(Some(5 + 5)))
+  }
+  test("Division") {
+    assertEquals(eval(Plus(
+  IntegerLiteral(5),
+  Division(
+    IntegerLiteral(5),
+    Minus(
+      IntegerLiteral(5),
+      IntegerLiteral(5)
+    )
+  )
+)), IntResult(None()))
+  }
+  
+  test("And") {
+    val k = And(
+      BooleanLiteral(false),
+      LessThan(
+        IntegerLiteral(5),
+        Division(
+          IntegerLiteral(5),
+          IntegerLiteral(0)
+        )
+      )
+    )
+    
+    assertEquals(eval(k), BooleanResult(Some(false)))
+  }
+
+  
+  test("Or") {
+    val k = Or(
+      BooleanLiteral(false),
+      LessThan(
+        IntegerLiteral(5),
+        Division(
+          IntegerLiteral(5),
+          IntegerLiteral(0)
+        )
+      )
+    )
+    val k2 = Or(
+      BooleanLiteral(true),
+      LessThan(
+        IntegerLiteral(5),
+        Division(
+          IntegerLiteral(5),
+          IntegerLiteral(0)
+        )
+      )
+    )
+    
+    assertEquals(eval(k), BooleanResult(None()))
+    assertEquals(eval(k2), BooleanResult(Some(true)))
+  }
+  
+  test("Implies") {
+    val k = Implies(
+      BooleanLiteral(false),
+      LessThan(
+        IntegerLiteral(5),
+        Division(
+          IntegerLiteral(5),
+          IntegerLiteral(0)
+        )
+      )
+    )
+    val k2 = Implies(
+      BooleanLiteral(true),
+      LessThan(
+        IntegerLiteral(5),
+        Division(
+          IntegerLiteral(5),
+          IntegerLiteral(0)
+        )
+      )
+    )
+    
+    assertEquals(eval(k), BooleanResult(Some(true)))
+    assertEquals(eval(k2), BooleanResult(None()))
+  }
+}
   
 class MySuite extends munit.FunSuite {
   test("Testing 5 * 1") {
