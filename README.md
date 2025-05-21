@@ -1,3 +1,11 @@
+# Usage
+
+Use the script run.sh to run the verification:
+./run.sh
+
+If you wish to only run the verification for specific modules.
+Go into the modules you do not want and uncomment the @library annotations.
+
 # Acknowledgements
 
 Andrea created the template for using Stainless.

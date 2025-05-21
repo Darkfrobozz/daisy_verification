@@ -20,7 +20,7 @@ object Constructors {
    * @see [[lang.Trees.And And]]
    */
 
-  @library
+  // @library
   def and(e: Expr): Expr = {
     require(inferredType(e) == BooleanType)
 
@@ -51,7 +51,7 @@ object Constructors {
    */
 
   
-  @library
+  // @library
   def or(e: Expr): Expr = {
     require(inferredType(e) == BooleanType)
 
@@ -75,7 +75,7 @@ object Constructors {
 
 
   /** Computes the negation of a boolean formula, with some simplifications. */
-  @library
+  // @library
   def negate(expr: Expr): Expr = {
     require(inferredType(expr) == BooleanType)
     decreases(complexity(expr))
@@ -140,7 +140,7 @@ object Constructors {
    * @see [[purescala.Expressions.BVPlus BVPlus]]
    * @see [[purescala.Expressions.RealPlus RealPlus]]
    */
-  @library
+  // @library
   def plus(lhs: Expr, rhs: Expr): Expr = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -157,7 +157,7 @@ object Constructors {
    * @see [[purescala.Expressions.BVMinus BVMinus]]
    * @see [[purescala.Expressions.RealMinus RealMinus]]
    */
-  @library
+  // @library
   def minus(lhs: Expr, rhs: Expr): Expr = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)
@@ -174,7 +174,7 @@ object Constructors {
    * @see [[purescala.Expressions.BVTimes BVTimes]]
    * @see [[purescala.Expressions.RealTimes RealTimes]]
    */
-  @library
+  // @library
   def times(lhs: Expr, rhs: Expr): Expr = {
     require(inferredType(lhs) == IntegerType)
     require(inferredType(rhs) == IntegerType)

@@ -26,9 +26,7 @@ object Trees {
   sealed trait Expr
 
   object Helpers {
-    // This is easily verified
-    // // Big problems come from And@library
-    @library
+    // @library
     def complexity(expr: Expr) : BigInt = {
       decreases(expr)
       BigInt(1) + (expr match
@@ -63,7 +61,7 @@ object Trees {
       Trees.IntPow(t, n)
     }
 
-    @library
+    // @library
     def getType(expr: Expr) : TypeTree = {
       expr match
         case IntegerLiteral(value) => IntegerType

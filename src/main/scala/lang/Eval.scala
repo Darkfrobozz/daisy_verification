@@ -22,7 +22,7 @@ case object TypeErr extends Result
 // We aim to eventually prove that if it is well-typed, the only error possible is ArthErr.
 sealed trait Result {
 
-  @library
+  // @library
   def op(x: Result, e: Expr) : Result  = {
     (this, x) match
       case (BooleanResult(a), BooleanResult(b)) => e match
@@ -119,7 +119,7 @@ sealed trait Result {
   }
 
 
-  @library
+  // @library
   def op(e: Expr) : Result = {
     this match
       case BooleanResult(a) => e match
@@ -162,7 +162,7 @@ sealed trait Result {
 object Eval {
 
   // Handle 0 ^ 0 by setting it equal 1
-  @library
+  // @library
   def pow(base: BigInt, exp: BigInt) : BigInt = {
     decreases(exp)
     require(exp >= 0)
@@ -173,7 +173,7 @@ object Eval {
       || (res != 0 && base != 0))
     )
 
-  @library
+  // @library
   def eval(e: Expr): Result = {
     decreases(complexity(e))
     e match
@@ -218,7 +218,7 @@ object Eval {
     
   }
 
-  @library
+  // @library
   def equivalentAST(e: Result) : Expr = {
     e match
       case BooleanResult(result) => result match
@@ -237,14 +237,14 @@ object Eval {
 
   
 
-  @library
+  // @library
   def smallstep(e : Expr) : Unit = {
     
   }.ensuring(smallstepHelper(e))
 
   // With this I want to prove that we can eval the sub expressions first.
   // Super easy for it to verify!
-  @library
+  // @library
   def smallstepHelper(e: Expr) : Boolean = {
     e match
       case _: Terminal => true
@@ -277,7 +277,7 @@ object Typing {
       * @param e : This is the expression to find the type on.
       * @return Returns a typetree that is based on all the information
       */
-  @library
+  // @library
   def inferredType(e: Expr): TypeTree = {
     decreases(complexity(e))
     e match
@@ -344,7 +344,7 @@ object Typing {
       * @param lhs
       * @param rhs
       */
-  @library
+  // @library
   def equalsProof(lhs : Expr, rhs: Expr) = {
     // Inferred type tells us that none of the subexpressions are untyped
     require(inferredType(Equals(lhs, rhs)) != Untyped)
@@ -361,7 +361,7 @@ object Typing {
   // This means that untyped => typeErr
   // It also means that IntegerType => intResult
   // Finally it means that BooleanType => BooleanResult (and unitResult => unitType)
-  @library
+  // @library
   @opaque
   def typeInsurance(e : Expr) : Unit = {
     decreases(complexity(e))
@@ -438,7 +438,7 @@ object Typing {
       }
   }.ensuring(typeResultEq(eval(e), inferredType(e)))
 
-  @library
+  // @library
   def typeEquality(e : Expr) : Unit = {
     require(inferredType(e) != Untyped)
     e match
