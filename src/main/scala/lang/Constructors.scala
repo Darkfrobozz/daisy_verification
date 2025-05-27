@@ -39,8 +39,11 @@ object Constructors {
     val simpler = flatAndTakeWhileTrue(flat)
     assert(eval(simpler) == eval(e))
 
+    typeInsurance(flat)
+    typeInsurance(simpler)
+    
     simpler
-  }.ensuring(res => eval(res) == eval(e) && complexity(res) <= complexity(e))
+  }.ensuring(res => eval(res) == eval(e) && complexity(res) <= complexity(e) && inferredType(res) == BooleanType)
    
   /** $encodingof `&&`-expressions with arbitrary number of operands as a sequence, and simplified.
    * @see [[purescala.Expressions.And And]]
@@ -70,8 +73,11 @@ object Constructors {
     val simpler = flatOrTakeWhileTrue(flat)
     assert(eval(simpler) == eval(e))
 
+    typeInsurance(flat)
+    typeInsurance(simpler)
+
     simpler
-  }.ensuring(res => eval(res) == eval(e) && complexity(res) <= complexity(e))
+  }.ensuring(res => eval(res) == eval(e) && complexity(res) <= complexity(e) && inferredType(res) == BooleanType)
 
 
   /** Computes the negation of a boolean formula, with some simplifications. */
@@ -85,9 +91,9 @@ object Constructors {
       // todo: This here needs to be changed to the optimized and version later on
       // when and is proven to be correct, although given that and is correct this should be correct.
       // That is given that the semantics is preserved by and function.
-      case Implies(e1,e2) => And(e1, negate(e2))
-      case Or(lhs, rhs) => And(negate(lhs), negate(rhs))
-      case And(lhs, rhs) => Or(negate(lhs), negate(rhs))
+      case Implies(e1,e2) => and(And(e1, negate(e2)))
+      case Or(lhs, rhs) => and(And(negate(lhs), negate(rhs)))
+      case And(lhs, rhs) => or(Or(negate(lhs), negate(rhs)))
 
       
       case LessThan(e1,e2) => GreaterEquals(e1,e2)
@@ -101,39 +107,6 @@ object Constructors {
       case Equals(lhs, rhs) => Not(Equals(lhs, rhs))
     })
   }.ensuring(res => inferredType(res) == BooleanType)
-
-  // def or(exprs: List[Expr]): Expr = {
-  //   val flat = exprs.flatMap {
-  //     case Or(rhs, lhs) => orConverter(Or(rhs, lhs))
-  //     case o => List(o)
-  //   }
-
-  //   // Immutable Version
-  //   val preSimpler:List[Expr] = flat.takeWhile(p => p != BooleanLiteral(true))
-
-  //   val simpler = if (preSimpler.length == flat.length) {
-  //     preSimpler
-  //   } else {
-  //     preSimpler ++ List(BooleanLiteral(true))
-  //   }.filter(p => p != BooleanLiteral(false))
-
-  //   // Mutable
-  //   // var stop = false
-  //   // val simpler:List[Expr] = for(e <- flat if !stop && e != BooleanLiteral(false)) yield {
-  //   //   if (e == BooleanLiteral(true)) {
-  //   //     stop = true
-  //   //   }
-  //   //   e
-  //   // }
-
-  //   // What are these other matches here?
-  //   // This looks like the make method
-  //   simpler match {
-  //     case Nil()  => BooleanLiteral(false)
-  //     case Cons(x, Nil()) => x
-  //     case _      => listToOr(simpler)
-  //   }
-  // }
 
   /** $encodingof simplified `... + ...` (plus).
    * @see [[purescala.Expressions.Plus Plus]]

@@ -219,7 +219,7 @@ object Eval {
   }
 
   // @library
-  def equivalentAST(e: Result) : Expr = {
+  def equivalentAST(e: Result) : Terminal = {
     e match
       case BooleanResult(result) => result match
         case Some(v) => BooleanLiteral(v)
@@ -231,11 +231,11 @@ object Eval {
       case TypeErr => TypeError()
   }.ensuring(res => eval(res) == e)
 
-  def evaleq(e : Expr) : Expr = {
+  // @library
+  def evaleq(e : Expr) : Terminal = {
+    typeInsurance(e)
     equivalentAST(eval(e))
-  }
-
-  
+  }.ensuring(res => inferredType(e) == inferredType(res))
 
   // @library
   def smallstep(e : Expr) : Unit = {

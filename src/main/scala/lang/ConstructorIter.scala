@@ -90,6 +90,46 @@ object NegateProof {
   }.ensuring(isNegation(expr, And(lhsNeg, rhsNeg))) 
 
   // @library
+  def impliesHelper(e1 : Terminal, e2 : Terminal, e3 : Terminal) : Unit = {
+    require(inferredType(e1) == BooleanType)
+    require(inferredType(e2) == BooleanType)
+    require(inferredType(e3) == BooleanType)
+    require(isNegation(e2, e3))
+    
+    (e1, e2) match
+      case (BooleanLiteral(a), BooleanLiteral(b)) =>
+        assert(e3 == BooleanLiteral(!b))
+      case (DivisionError(BooleanType), _) => ()
+      case _ => ()
+  }.ensuring(isNegation(Implies(e1, e2), And(e1, e3)))
+
+  // @library
+  def impliesNegation(expr : Implies, rhsNeg: Expr) : Unit = {
+    // One or both of the branches could have a division error.
+    // They do not need to equal eachother
+    require(inferredType(expr) == BooleanType)
+    require(inferredType(rhsNeg) == BooleanType)
+    require(isNegation(expr.rhs, rhsNeg))
+
+    // evaleq could result in divisionError, but a divisionError has the correct type...
+
+    typeInsurance(rhsNeg)
+    typeInsurance(expr.rhs)
+    assert(isNegation(evaleq(rhsNeg), evaleq(expr.rhs)))
+
+    val rhs = expr.rhs
+    val lhs = expr.lhs
+    smallstep(And(lhs, rhsNeg))
+    smallstep(expr)
+    assert(eval(expr) == eval(Implies(evaleq(lhs), evaleq(rhs))))
+    assert(eval(And(lhs, rhsNeg)) == eval(And(evaleq(lhs), evaleq(rhsNeg))))
+    assert(isNegation(evaleq(rhs), evaleq(rhsNeg)))
+
+    impliesHelper(evaleq(lhs), evaleq(rhs), evaleq(rhsNeg))
+    // eval(Implies(e1, e2)) == eval(And(e1, e3))
+  }.ensuring(isNegation(expr, And(expr.lhs, rhsNeg))) 
+
+  // @library
   def negateGivesNegation(expr : Expr) : Unit = {
     require(inferredType(expr) == BooleanType)
     decreases(complexity(expr))
@@ -97,6 +137,8 @@ object NegateProof {
       case Not(e) => ()
       case Implies(e1,e2) =>
         negateGivesNegation(e2)
+        impliesNegation(Implies(e1, e2), negate(e2))
+        assert(isNegation(And(e1, negate(e2)), Implies(e1, e2)))
       case Or(lhs, rhs) =>
         negateGivesNegation(lhs)
         negateGivesNegation(rhs)
